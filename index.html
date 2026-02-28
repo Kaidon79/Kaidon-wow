@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0510">
+<title>Deine Gilde — TBC Guild Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════════════════════════════
+   NAVBAR (aus shared.js injiziert)
+═══════════════════════════════════════════ */
+</style>
+<style id="navbar-style"></style>
+<style>
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════ */
+:root {
+  --gold:       #c8a84b;
+  --gold-light: #f0d070;
+  --gold-dark:  #8a6a1a;
+  --gold-dim:   rgba(200,168,75,.15);
+  --purple:     #6b3fa0;
+  --bg:         #06030f;
+  --bg2:        #0e0820;
+  --bg3:        #160d2e;
+  --text:       #e8dcc8;
+  --muted:      #7a6a50;
+  --border:     rgba(200,168,75,.18);
+  --border-s:   rgba(200,168,75,.45);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  font-size: 17px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════ */
+.hero {
+  position: relative;
+  min-height: 92vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  padding: 80px 24px 60px;
+}
+
+/* Hintergrund-Schichten */
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(107,63,160,.35) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 20% 80%, rgba(200,168,75,.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 20%, rgba(107,63,160,.2) 0%, transparent 60%),
+    linear-gradient(180deg, #06030f 0%, #0e0820 50%, #06030f 100%);
+}
+/* Animierter Partikel-Effekt */
+.hero-particles {
+  position: absolute; inset: 0; z-index: 1; overflow: hidden;
+}
+.particle {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: var(--gold);
+  border-radius: 50%;
+  opacity: 0;
+  animation: float-up var(--dur, 8s) var(--delay, 0s) infinite ease-in-out;
+}
+@keyframes float-up {
+  0%   { opacity: 0; transform: translateY(0) scale(1); }
+  20%  { opacity: .6; }
+  80%  { opacity: .3; }
+  100% { opacity: 0; transform: translateY(-120px) scale(0); }
+}
+
+/* Dekorative Linie oben */
+.hero-line {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 2;
+  background: linear-gradient(90deg, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent);
+}
+
+.hero-content {
+  position: relative; z-index: 3;
+  max-width: 820px;
+}
+
+/* Kleines Label über dem Titel */
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'Cinzel', serif; font-size: .65rem;
+  letter-spacing: .22em; text-transform: uppercase;
+  color: var(--gold); opacity: .8;
+  margin-bottom: 22px;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  content: ''; display: block; width: 30px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+.hero-eyebrow::after { transform: scaleX(-1); }
+
+.hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.4rem, 7vw, 5.5rem);
+  font-weight: 900;
+  color: var(--gold-light);
+  text-shadow:
+    0 0 60px rgba(200,168,75,.5),
+    0 0 120px rgba(200,168,75,.2);
+  line-height: 1.05;
+  letter-spacing: .04em;
+  margin-bottom: 10px;
+  animation: fade-in .8s ease both;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-subtitle {
+  font-family: 'Crimson Pro', serif;
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 36px;
+  animation: fade-in .8s .15s ease both;
+}
+
+.hero-desc {
+  font-size: clamp(.9rem, 2vw, 1.1rem);
+  color: rgba(232,220,200,.7);
+  max-width: 580px; margin: 0 auto 44px;
+  animation: fade-in .8s .25s ease both;
+}
+
+/* Hero-Buttons */
+.hero-buttons {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  animation: fade-in .8s .35s ease both;
+}
+.btn-hero-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  color: #06030f; font-family: 'Cinzel', serif; font-size: .72rem;
+  letter-spacing: .14em; text-transform: uppercase; text-decoration: none;
+  font-weight: 700; padding: 14px 28px; border: none;
+  cursor: pointer; transition: all .2s; position: relative; overflow: hidden;
+}
+.btn-hero-primary::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  opacity: 0; transition: opacity .2s;
+}
+.btn-hero-primary:hover::before { opacity: 1; }
+.btn-hero-primary span { position: relative; z-index: 1; }
+.btn-hero-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; border: 1px solid var(--border-s);
+  color: var(--text); font-family: 'Cinzel', serif; font-size: .72rem;
+  letter-spacing: .14em; text-transform: uppercase; text-decoration: none;
+  padding: 14px 28px; transition: all .2s;
+}
+.btn-hero-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Scroll-Pfeil */
+.hero-scroll {
+  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 3; display: flex; flex-direction: column; align-items: center;
+  gap: 7px; color: var(--muted); font-size: .58rem; font-family: 'Cinzel', serif;
+  letter-spacing: .12em; text-transform: uppercase;
+  animation: bounce 2s infinite;
+}
+.hero-scroll-arrow { font-size: 1.1rem; }
+@keyframes bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(6px); }
+}
+
+/* Statistik-Zeile im Hero */
+.hero-stats {
+  display: flex; gap: 0; justify-content: center; margin-top: 52px;
+  animation: fade-in .8s .45s ease both;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,.3);
+  max-width: 520px; margin: 52px auto 0;
+}
+.hero-stat {
+  flex: 1; padding: 16px 10px; text-align: center;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.hero-stat:last-child { border-right: none; }
+.hero-stat-num {
+  font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 700;
+  color: var(--gold); line-height: 1; display: block;
+}
+.hero-stat-label {
+  font-size: .6rem; color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase; font-family: 'Cinzel', serif;
+  margin-top: 4px; display: block;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION: NÄCHSTER RAID
+═══════════════════════════════════════════ */
+.section {
+  max-width: 1200px; margin: 0 auto;
+  padding: 70px 24px;
+}
+.section-header {
+  text-align: center; margin-bottom: 48px;
+}
+.section-eyebrow {
+  font-family: 'Cinzel', serif; font-size: .62rem; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--gold); opacity: .75;
+  display: block; margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Cinzel', serif; font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+  font-weight: 700; color: var(--gold-light);
+  letter-spacing: .04em; margin-bottom: 12px;
+}
+.section-line {
+  width: 60px; height: 2px; margin: 0 auto;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* Raid-Schedule-Karten */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.schedule-card {
+  background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  border: 1px solid var(--border);
+  padding: 22px 20px;
+  position: relative;
+  transition: border-color .2s, box-shadow .2s;
+}
+.schedule-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent);
+}
+.schedule-card:hover {
+  border-color: rgba(200,168,75,.4);
+  box-shadow: 0 4px 30px rgba(200,168,75,.1);
+}
+.schedule-card-top {
+  display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px;
+}
+.schedule-icon { font-size: 2rem; flex-shrink: 0; line-height: 1; }
+.schedule-inst { font-family: 'Cinzel', serif; font-size: .9rem; color: var(--gold-light); margin-bottom: 3px; }
+.schedule-date { font-size: .78rem; color: var(--muted); }
+.schedule-type {
+  display: inline-block; padding: 2px 8px; font-family: 'Cinzel', serif;
+  font-size: .58rem; letter-spacing: .08em; margin-bottom: 3px;
+}
+.type-raid    { background:rgba(192,57,43,.2);  border:1px solid rgba(192,57,43,.5);  color:#e59866; }
+.type-dungeon { background:rgba(39,174,96,.15); border:1px solid rgba(39,174,96,.4);  color:#82e0aa; }
+.type-heroic  { background:rgba(41,128,185,.15);border:1px solid rgba(41,128,185,.4); color:#69CCF0; }
+.schedule-members {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
+}
+.schedule-member {
+  font-size: .72rem; padding: 2px 8px;
+  background: rgba(0,0,0,.3); border: 1px solid var(--border);
+}
+.schedule-note {
+  font-size: .8rem; font-style: italic; color: var(--muted);
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.schedule-empty {
+  text-align: center; padding: 48px 24px;
+  background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  border: 1px dashed var(--border);
+  color: var(--muted);
+}
+.schedule-empty .icon { font-size: 2.5rem; opacity: .35; margin-bottom: 12px; }
+.schedule-empty p { font-size: .88rem; font-style: italic; }
+
+/* Raid hinzufügen */
+.add-schedule {
+  margin-top: 20px; padding: 18px 20px;
+  background: rgba(0,0,0,.25); border: 1px dashed rgba(200,168,75,.3);
+  text-align: center;
+}
+.add-schedule-toggle {
+  background: none; border: none; color: var(--gold); cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; transition: color .2s;
+}
+.add-schedule-toggle:hover { color: var(--gold-light); }
+.add-form { display: none; margin-top: 16px; }
+.add-form.open { display: block; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+@media(max-width:500px){ .form-row { grid-template-columns: 1fr; } }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label { font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.form-input, .form-select {
+  background: rgba(0,0,0,.5); border: 1px solid var(--border);
+  color: var(--text); padding: 9px 12px; font-family: 'Crimson Pro', serif;
+  font-size: .95rem; outline: none; transition: border-color .2s;
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus { border-color: var(--gold); }
+.form-select option { background: var(--bg2); }
+
+/* ═══════════════════════════════════════════
+   SECTION: MODULE
+═══════════════════════════════════════════ */
+.modules-divider {
+  height: 1px; max-width: 1200px; margin: 0 auto;
+  background: linear-gradient(90deg, transparent, var(--border-s), transparent);
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+.module-card {
+  background: linear-gradient(160deg, var(--bg2) 0%, var(--bg3) 100%);
+  border: 1px solid var(--border);
+  padding: 28px 24px;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: all .25s;
+  display: block;
+}
+.module-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent);
+  opacity: .6; transition: opacity .25s;
+}
+.module-card::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(200,168,75,.1) 0%, transparent 70%);
+  opacity: 0; transition: opacity .25s;
+}
+.module-card:hover { border-color: rgba(200,168,75,.5); transform: translateY(-3px); box-shadow: 0 8px 40px rgba(0,0,0,.6); }
+.module-card:hover::before { opacity: 1; }
+.module-card:hover::after  { opacity: 1; }
+.module-icon { font-size: 2.4rem; margin-bottom: 16px; display: block; line-height: 1; }
+.module-name {
+  font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
+  color: var(--gold-light); letter-spacing: .06em;
+  margin-bottom: 10px; position: relative; z-index: 1;
+}
+.module-desc {
+  font-size: .88rem; color: rgba(232,220,200,.6); line-height: 1.55;
+  position: relative; z-index: 1;
+}
+.module-features {
+  margin-top: 14px; display: flex; flex-direction: column; gap: 4px;
+}
+.module-feature {
+  font-size: .74rem; color: var(--muted); display: flex; align-items: center; gap: 7px;
+  position: relative; z-index: 1;
+}
+.module-feature::before { content: '✦'; font-size: .5rem; color: var(--gold-dark); flex-shrink: 0; }
+.module-arrow {
+  position: absolute; bottom: 20px; right: 20px;
+  font-size: .9rem; color: var(--border-s);
+  transition: color .2s, transform .2s;
+}
+.module-card:hover .module-arrow { color: var(--gold); transform: translateX(3px); }
+
+/* ═══════════════════════════════════════════
+   SECTION: HOW IT WORKS
+═══════════════════════════════════════════ */
+.how-section {
+  background: linear-gradient(180deg, transparent, rgba(107,63,160,.08), transparent);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 70px 24px;
+}
+.how-grid {
+  max-width: 960px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 32px;
+}
+.how-step { text-align: center; }
+.how-num {
+  font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: 900;
+  color: transparent; -webkit-text-stroke: 1px rgba(200,168,75,.4);
+  line-height: 1; margin-bottom: 12px;
+}
+.how-title {
+  font-family: 'Cinzel', serif; font-size: .78rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gold-light); margin-bottom: 8px;
+}
+.how-desc { font-size: .84rem; color: var(--muted); line-height: 1.55; }
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 28px 24px;
+  text-align: center;
+  font-size: .72rem; color: var(--muted);
+  font-family: 'Cinzel', serif; letter-spacing: .08em;
+}
+.footer span { color: var(--gold); }
+
+/* ═══════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════ */
+.btn {
+  padding: 10px 18px; border: none; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: .65rem; letter-spacing: .1em;
+  text-transform: uppercase; transition: all .18s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: #06030f; font-weight: 700; }
+.btn-primary:hover { background: linear-gradient(135deg, var(--gold), var(--gold-light)); }
+.btn-danger  { background: rgba(192,57,43,.2); border: 1px solid rgba(192,57,43,.5); color: #e74c3c; }
+.btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sm { padding: 6px 12px; font-size: .6rem; }
+
+#loading-overlay {
+  position: fixed; inset: 0; background: var(--bg); z-index: 999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+}
+.spin { font-size: 2.8rem; animation: rot 2s linear infinite; }
+@keyframes rot { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+.loading-txt { font-family:'Cinzel',serif; color:var(--gold); letter-spacing:.15em; text-transform:uppercase; font-size:.78rem; }
+
+/* Gilde umbenennen Button */
+.guild-edit {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 1px dashed rgba(200,168,75,.3);
+  color: var(--muted); font-family: 'Cinzel', serif; font-size: .58rem;
+  letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+  padding: 4px 10px; margin-top: 10px; transition: all .2s;
+}
+.guild-edit:hover { border-color: var(--gold); color: var(--gold); }
+
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spin">⚔</div>
+  <div class="loading-txt">Lade Gildendaten...</div>
+</div>
+
+<!-- NAVBAR (wird via JS eingefügt) -->
+<div id="navbar-container"></div>
+
+<!-- ══ HERO ══════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="particles"></div>
+  <div class="hero-line"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">World of Warcraft · TBC Classic</div>
+    <h1 class="hero-title" id="hero-guild-name">Deine Gilde</h1>
+    <p class="hero-subtitle" id="hero-motto">For the Horde!</p>
+    <button class="guild-edit" onclick="editGuildName()">✏ Gildenname & Motto anpassen</button>
+    <p class="hero-desc" style="margin-top:24px;">
+      Verwalte deine Gilde, plane Raids und Dungeons, verteile Loot fair mit dem
+      bewährten SR&nbsp;+&nbsp;EPGP System — alles an einem Ort.
+    </p>
+    <div class="hero-buttons">
+      <a href="raid.html" class="btn-hero-primary"><span>⚔ Raid planen</span></a>
+      <a href="members.html" class="btn-hero-ghost">👥 Mitglieder</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-members">0</span>
+        <span class="hero-stat-label">Mitglieder</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-raids">0</span>
+        <span class="hero-stat-label">Raids</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-items">0</span>
+        <span class="hero-stat-label">Items vergeben</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num" id="stat-dungeons">0</span>
+        <span class="hero-stat-label">Dungeons</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-scroll">
+    <span class="hero-scroll-arrow">↓</span>
+    <span>Mehr</span>
+  </div>
+</section>
+
+<!-- ══ NÄCHSTE RAIDS ═════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-header">
+    <span class="section-eyebrow">Geplant</span>
+    <h2 class="section-title">Nächste Raids &amp; Dungeons</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="schedule-grid" id="schedule-grid">
+    <!-- wird per JS gefüllt -->
+  </div>
+
+  <div class="add-schedule">
+    <button class="add-schedule-toggle" onclick="toggleAddForm()">+ Termin hinzufügen</button>
+    <div class="add-form" id="add-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Datum</label>
+          <input class="form-input" type="date" id="sched-date"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Instanz</label>
+          <select class="form-select" id="sched-inst"></select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">Notiz (optional)</label>
+        <input class="form-input" id="sched-note" placeholder="z.B. Progression, SR-Abgabe bis Mittwoch..."/>
+      </div>
+      <div style="display:flex;gap:9px;justify-content:center;">
+        <button class="btn btn-primary" onclick="addSchedule()">✓ Termin speichern</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleAddForm()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trennlinie -->
+<div class="modules-divider"></div>
+
+<!-- ══ MODULE ════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-header">
+    <span class="section-eyebrow">Features</span>
+    <h2 class="section-title">Was kann das System?</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="modules-grid">
+    <a href="members.html" class="module-card">
+      <span class="module-icon">👥</span>
+      <div class="module-name">Mitgliederverwaltung</div>
+      <div class="module-desc">Alle Gildenmitglieder auf einen Blick — mit Klasse, Rolle und Priorität.</div>
+      <div class="module-features">
+        <span class="module-feature">EP / GP / PR für jeden Raider</span>
+        <span class="module-feature">Soft-Reserves eintragen</span>
+        <span class="module-feature">EP/GP bearbeiten & zurücksetzen</span>
+        <span class="module-feature">Anwesenheits-Historie</span>
+      </div>
+      <span class="module-arrow">→</span>
+    </a>
+
+    <a href="dungeon.html" class="module-card">
+      <span class="module-icon">🗡</span>
+      <div class="module-name">Dungeon Tracker</div>
+      <div class="module-desc">Alle 16 TBC Dungeons — Normal und Heroic — mit Loot-Verteilung.</div>
+      <div class="module-features">
+        <span class="module-feature">Normal &amp; Heroic Schwierigkeit</span>
+        <span class="module-feature">5er-Gruppe zusammenstellen</span>
+        <span class="module-feature">Loot nach SR+PR-System</span>
+        <span class="module-feature">Loot-Historie pro Dungeon</span>
+      </div>
+      <span class="module-arrow">→</span>
+    </a>
+
+    <a href="raid.html" class="module-card">
+      <span class="module-icon">⚔</span>
+      <div class="module-name">Raid Planer</div>
+      <div class="module-desc">Alle 9 TBC Raids von Karazhan bis Sonnenbrunnenplateau.</div>
+      <div class="module-features">
+        <span class="module-feature">Raid Night starten &amp; beenden</span>
+        <span class="module-feature">Anwesenheit &amp; EP-Vergabe</span>
+        <span class="module-feature">SR + EPGP Loot-System</span>
+        <span class="module-feature">Vollständige Loot-Historie</span>
+      </div>
+      <span class="module-arrow">→</span>
+    </a>
+
+    <div class="module-card" style="cursor:default;opacity:.55;">
+      <span class="module-icon">📊</span>
+      <div class="module-name">Mehr kommt</div>
+      <div class="module-desc">Weitere Module sind in Planung — DKP-Übersicht, Boss-Strategie, Klassenbewertung.</div>
+      <div class="module-features">
+        <span class="module-feature">Coming soon...</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SO FUNKTIONIERT ES ════════════════════════════════════ -->
+<div class="how-section">
+  <div class="section-header">
+    <span class="section-eyebrow">System</span>
+    <h2 class="section-title">So funktioniert das Loot-System</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="how-grid">
+    <div class="how-step">
+      <div class="how-num">01</div>
+      <div class="how-title">Mitglieder anlegen</div>
+      <div class="how-desc">Trage alle Gildenmitglieder mit Klasse und Rolle ein. EP und GP starten automatisch.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">02</div>
+      <div class="how-title">Soft-Reserve</div>
+      <div class="how-desc">Jeder Raider reserviert bis zu 2 Items pro Instanz. SR-Inhaber gewinnen automatisch.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">03</div>
+      <div class="how-title">Raid starten</div>
+      <div class="how-desc">Instanz auswählen, Anwesenheit markieren, Raid Night beginnen.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">04</div>
+      <div class="how-title">Loot verteilen</div>
+      <div class="how-desc">1 SR = Auto-Win · Mehrere SR = höchste PR · Kein SR = höchste PR (EP ÷ GP).</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">05</div>
+      <div class="how-title">EP vergeben</div>
+      <div class="how-desc">Am Raid-Ende erhalten alle Anwesenden automatisch 100 Effort Points.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FOOTER ════════════════════════════════════════════════ -->
+<footer class="footer">
+  <span id="footer-guild">Deine Gilde</span> · TBC Guild Manager · World of Warcraft: The Burning Crusade Classic
+</footer>
+
+<!-- Edit Guild Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+  <div style="background:var(--bg2);border:1px solid var(--border-s);padding:28px;max-width:420px;width:92%;position:relative;">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);"></div>
+    <div style="font-family:'Cinzel',serif;font-size:.95rem;color:var(--gold);margin-bottom:16px;">✏ Gilde anpassen</div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label class="form-label">Gildenname</label>
+      <input class="form-input" id="edit-guild-name" placeholder="Deine Gilde"/>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Motto / Schlachtruf</label>
+      <input class="form-input" id="edit-guild-motto" placeholder="For the Horde!"/>
+    </div>
+    <div style="display:flex;gap:9px;">
+      <button class="btn btn-primary" onclick="saveGuildEdit()">✓ Speichern</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+// ─── STATE ──────────────────────────────────────────────────────
+let G = null; // Globaler State
+
+// ─── INIT ───────────────────────────────────────────────────────
+(async () => {
+  G = await guildLoad();
+
+  // Navbar einbauen
+  document.getElementById('navbar-style').textContent = NAVBAR_CSS;
+  document.getElementById('navbar-container').innerHTML = buildNavbar('index', G.guildName);
+
+  // Partikel
+  buildParticles();
+
+  // UI füllen
+  updateHero();
+  updateStats();
+  buildInstDropdown();
+  renderSchedule();
+
+  document.getElementById('loading-overlay').style.display = 'none';
+  document.getElementById('sched-date').valueAsDate = new Date();
+})();
+
+// ─── HERO & STATS ────────────────────────────────────────────────
+function updateHero() {
+  document.getElementById('hero-guild-name').textContent = G.guildName;
+  document.getElementById('hero-motto').textContent = G.guildMotto;
+  document.getElementById('footer-guild').textContent = G.guildName;
+  // Navbar Titel aktualisieren
+  const nb = document.querySelector('.navbar-title');
+  if (nb) nb.textContent = G.guildName;
+}
+
+function updateStats() {
+  const allLoot = [
+    ...G.raidNights.flatMap(r => r.loot || []),
+    ...G.dungeonRuns.flatMap(r => r.loot || []),
+  ];
+  document.getElementById('stat-members').textContent  = G.members.length;
+  document.getElementById('stat-raids').textContent    = G.raidNights.length;
+  document.getElementById('stat-items').textContent    = allLoot.length;
+  document.getElementById('stat-dungeons').textContent = G.dungeonRuns.length;
+}
+
+// ─── PARTIKEL ───────────────────────────────────────────────────
+function buildParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${20 + Math.random()*70}%;
+      --dur:${6 + Math.random()*10}s;
+      --delay:${Math.random()*8}s;
+      width:${1+Math.random()*2}px;
+      height:${1+Math.random()*2}px;
+      opacity:${0.2+Math.random()*0.5};
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ─── SCHEDULE ───────────────────────────────────────────────────
+function buildInstDropdown() {
+  const sel = document.getElementById('sched-inst');
+  const groups = { raid: '⚔ Raids', dungeon: '🗡 Dungeons', heroic: '💀 Heroics' };
+  Object.entries(groups).forEach(([type, label]) => {
+    const og = document.createElement('optgroup');
+    og.label = label;
+    TBC_INSTANCES.filter(i => i.type === type).forEach(inst => {
+      const o = document.createElement('option');
+      o.value = inst.id;
+      o.textContent = `${inst.icon} ${inst.name} (${inst.size}er)`;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+}
+
+function renderSchedule() {
+  const grid = document.getElementById('schedule-grid');
+  const today = new Date().toISOString().split('T')[0];
+  const upcoming = (G.raidSchedule || [])
+    .filter(s => s.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!upcoming.length) {
+    grid.innerHTML = `
+      <div class="schedule-empty" style="grid-column:1/-1;">
+        <div class="icon">📅</div>
+        <p>Noch keine Termine geplant.<br>Füge den ersten Raid-Termin hinzu!</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = upcoming.map((s, idx) => {
+    const inst = getInstance(s.instId);
+    if (!inst) return '';
+    const typeClass = `type-${inst.type}`;
+    const typeLabel = { raid: 'Raid', dungeon: 'Dungeon', heroic: 'Heroic' }[inst.type];
+    const dateStr = new Date(s.date + 'T12:00:00').toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long' });
+    const isNext = idx === 0;
+
+    return `
+      <div class="schedule-card" style="${isNext ? 'border-color:rgba(200,168,75,.45);' : ''}">
+        ${isNext ? '<div style="position:absolute;top:14px;right:14px;font-family:\'Cinzel\',serif;font-size:.55rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);padding:2px 7px;">Nächster</div>' : ''}
+        <div class="schedule-card-top">
+          <span class="schedule-icon">${inst.icon}</span>
+          <div>
+            <span class="${typeClass} schedule-type">${typeLabel} · ${inst.size}er</span>
+            <div class="schedule-inst">${inst.name}</div>
+            <div class="schedule-date">📅 ${dateStr}</div>
+          </div>
+        </div>
+        ${s.note ? `<div class="schedule-note">${s.note}</div>` : ''}
+        <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:.56rem;" onclick="deleteSchedule(${idx})">✕ Löschen</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleAddForm() {
+  document.getElementById('add-form').classList.toggle('open');
+}
+
+async function addSchedule() {
+  const date = document.getElementById('sched-date').value;
+  const instId = document.getElementById('sched-inst').value;
+  const note = document.getElementById('sched-note').value.trim();
+  if (!date || !instId) { showToast('⚠ Datum und Instanz wählen!'); return; }
+  if (!G.raidSchedule) G.raidSchedule = [];
+  G.raidSchedule.push({ date, instId, note });
+  G.raidSchedule.sort((a,b) => a.date.localeCompare(b.date));
+  document.getElementById('sched-note').value = '';
+  toggleAddForm();
+  await guildSave(G);
+  renderSchedule();
+  showToast('📅 Termin gespeichert!');
+}
+
+async function deleteSchedule(idx) {
+  const today = new Date().toISOString().split('T')[0];
+  const upcoming = (G.raidSchedule || []).filter(s => s.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
+  const item = upcoming[idx];
+  if (!item) return;
+  G.raidSchedule = G.raidSchedule.filter(s => !(s.date === item.date && s.instId === item.instId));
+  await guildSave(G);
+  renderSchedule();
+  showToast('🗑 Termin gelöscht.');
+}
+
+// ─── GILDE BEARBEITEN ────────────────────────────────────────────
+function editGuildName() {
+  document.getElementById('edit-guild-name').value  = G.guildName;
+  document.getElementById('edit-guild-motto').value = G.guildMotto;
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+}
+async function saveGuildEdit() {
+  const name  = document.getElementById('edit-guild-name').value.trim();
+  const motto = document.getElementById('edit-guild-motto').value.trim();
+  if (!name) { showToast('⚠ Name darf nicht leer sein!'); return; }
+  G.guildName  = name;
+  G.guildMotto = motto || 'For the Horde!';
+  await guildSave(G);
+  updateHero();
+  closeEditModal();
+  showToast(`✅ "${name}" gespeichert!`);
+}
+</script>
+</body>
+</html>
