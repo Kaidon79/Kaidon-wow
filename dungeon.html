@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0510">
+<title>Dungeons — TBC Guild Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style id="navbar-style"></style>
+<style>
+:root {
+  --gold:#c8a84b; --gold-light:#f0d070; --gold-dark:#8a6a1a;
+  --bg:#06030f; --bg2:#0e0820; --bg3:#160d2e;
+  --text:#e8dcc8; --muted:#7a6a50;
+  --border:rgba(200,168,75,.18); --border-s:rgba(200,168,75,.45);
+  --green:#27ae60; --red:#c0392b;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',serif;font-size:16px;min-height:100vh;
+  background-image:radial-gradient(ellipse 60% 40% at 30% 20%,rgba(39,174,96,.08) 0%,transparent 60%),
+  radial-gradient(ellipse 50% 40% at 80% 70%,rgba(41,128,185,.1) 0%,transparent 60%);}
+.page-wrap{max-width:1300px;margin:0 auto;padding:28px 20px 60px;}
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.page-eyebrow{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:5px;}
+.page-title{font-family:'Cinzel',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;color:var(--gold-light);letter-spacing:.04em;}
+.page-subtitle{font-size:.88rem;color:var(--muted);margin-top:3px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:24px;}
+@media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);padding:14px 10px;text-align:center;position:relative;}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-dark),transparent);}
+.stat-num{font-family:'Cinzel',serif;font-size:1.9rem;font-weight:700;color:var(--gold);line-height:1;display:block;}
+.stat-label{font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;font-family:'Cinzel',serif;display:block;}
+.layout{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
+.panel{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);position:relative;}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-dark),var(--gold),var(--gold-dark),transparent);}
+.panel-title{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);padding:14px 16px 10px;border-bottom:1px solid var(--border);}
+.type-tabs{display:flex;border-bottom:1px solid var(--border);}
+.type-tab{flex:1;padding:10px 8px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .15s;border-bottom:2px solid transparent;}
+.type-tab.active{color:var(--gold-light);border-bottom-color:var(--gold);}
+.type-tab.tab-normal.active{border-bottom-color:rgba(39,174,96,.9);color:#82e0aa;}
+.type-tab.tab-heroic.active{border-bottom-color:rgba(41,128,185,.9);color:#69CCF0;}
+.dungeon-list{max-height:460px;overflow-y:auto;padding:6px 0;}
+.dungeon-list::-webkit-scrollbar{width:3px;}
+.dungeon-list::-webkit-scrollbar-thumb{background:var(--gold-dark);}
+.dungeon-entry{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(200,168,75,.06);}
+.dungeon-entry:hover{background:rgba(200,168,75,.06);}
+.dungeon-entry.selected{background:rgba(200,168,75,.1);border-left:3px solid var(--gold);}
+.dungeon-entry.heroic-sel{border-left-color:#69CCF0;background:rgba(41,128,185,.08);}
+.dungeon-icon{font-size:1.2rem;flex-shrink:0;width:26px;text-align:center;}
+.dungeon-info{flex:1;min-width:0;}
+.dungeon-name{font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dungeon-zone{font-size:.66rem;color:var(--muted);}
+.dungeon-runs-count{font-family:'Cinzel',serif;font-size:.62rem;color:var(--muted);flex-shrink:0;}
+.active-run-banner{background:linear-gradient(135deg,rgba(41,128,185,.2),rgba(200,168,75,.1));border:1px solid rgba(41,128,185,.5);padding:13px 16px;margin-bottom:16px;position:relative;}
+.active-run-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#69CCF0,transparent);}
+.arb-title{font-family:'Cinzel',serif;font-size:.83rem;color:#69CCF0;margin-bottom:2px;}
+.arb-sub{font-size:.76rem;color:var(--muted);}
+.no-selection{text-align:center;padding:56px 24px;color:var(--muted);background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);}
+.no-sel-icon{font-size:3rem;opacity:.25;margin-bottom:12px;}
+.no-sel-txt{font-size:.88rem;font-style:italic;}
+.card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);padding:16px;margin-bottom:14px;position:relative;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-dark),var(--gold),var(--gold-dark),transparent);}
+.card.heroic-card::before{background:linear-gradient(90deg,transparent,rgba(41,128,185,.8),#69CCF0,rgba(41,128,185,.8),transparent);}
+.card-title{font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;color:var(--gold);letter-spacing:.08em;margin-bottom:12px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+.group-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;}
+@media(max-width:500px){.group-slots{grid-template-columns:repeat(3,1fr);}}
+.group-slot{background:rgba(0,0,0,.3);border:1px dashed rgba(200,168,75,.25);padding:10px 6px;text-align:center;min-height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;}
+.group-slot.filled{border-style:solid;border-color:var(--border);}
+.group-slot-icon{font-size:1.3rem;line-height:1;}
+.group-slot-name{font-size:.63rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
+.group-slot-role{font-size:.54rem;color:var(--muted);}
+.group-slot-remove{position:absolute;top:3px;right:3px;background:rgba(192,57,43,.4);border:none;color:#e74c3c;font-size:.65rem;cursor:pointer;width:15px;height:15px;display:none;align-items:center;justify-content:center;}
+.group-slot.filled:hover .group-slot-remove{display:flex;}
+.group-slot.empty-slot{color:var(--muted);}
+.slot-add-icon{font-size:1.1rem;opacity:.3;}
+.slot-add-txt{font-size:.56rem;color:var(--muted);}
+.member-picker{background:var(--bg2);border:1px solid var(--border-s);padding:11px;margin-bottom:11px;}
+.picker-title{font-family:'Cinzel',serif;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;}
+.picker-list{display:flex;flex-wrap:wrap;gap:5px;max-height:150px;overflow-y:auto;}
+.picker-item{display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(0,0,0,.3);border:1px solid var(--border);cursor:pointer;font-size:.78rem;transition:all .12s;}
+.picker-item:hover{border-color:var(--gold);background:rgba(200,168,75,.08);}
+.picker-item.in-group{opacity:.35;pointer-events:none;}
+.boss-section{margin-bottom:13px;}
+.boss-name{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:5px 0 4px;border-bottom:1px solid var(--border);margin-bottom:5px;}
+.item-entry{display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border);margin-bottom:4px;cursor:pointer;transition:all .12s;}
+.item-entry:hover{border-color:rgba(200,168,75,.3);}
+.item-entry.selected{border-color:var(--gold);background:rgba(200,168,75,.1);}
+.item-entry.given{opacity:.4;pointer-events:none;}
+.q-epic{color:#a335ee}.q-rare{color:#0070dd}.q-uncommon{color:#1eff00}
+.item-name{flex:1;font-size:.83rem;}
+.item-gp{font-family:'Cinzel',serif;font-size:.67rem;color:var(--gold);flex-shrink:0;}
+.sel-box{padding:9px 13px;background:rgba(200,168,75,.07);border:1px solid var(--border-s);margin:9px 0;}
+.sel-label{font-size:.58rem;color:var(--muted);font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;}
+.loot-entry{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.loot-entry:last-child{border-bottom:none;}
+.loot-item{flex:1;font-size:.83rem;}
+.loot-winner{font-size:.8rem;font-weight:600;}
+.loot-tag{font-size:.57rem;padding:2px 6px;font-family:'Cinzel',serif;}
+.tag-sr{background:rgba(107,63,160,.3);border:1px solid rgba(107,63,160,.5);color:#c39bd3;}
+.tag-pr{background:rgba(39,174,96,.2);border:1px solid rgba(39,174,96,.4);color:#82e0aa;}
+.history-run{background:rgba(0,0,0,.2);border:1px solid var(--border);margin-bottom:9px;}
+.history-run-header{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;transition:background .15s;}
+.history-run-header:hover{background:rgba(200,168,75,.04);}
+.hr-inst{font-family:'Cinzel',serif;font-size:.76rem;color:var(--gold-light);flex:1;}
+.hr-date{font-size:.7rem;color:var(--muted);}
+.hr-ep{font-size:.68rem;color:#82e0aa;}
+.hr-items{font-size:.68rem;color:var(--muted);}
+.hr-toggle{font-size:.7rem;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.history-run-body{display:none;padding:10px 14px;border-top:1px solid var(--border);}
+.history-run-body.open{display:block;}
+.type-badge{font-size:.57rem;padding:2px 7px;font-family:'Cinzel',serif;letter-spacing:.06em;flex-shrink:0;}
+.tb-normal{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.4);color:#82e0aa;}
+.tb-heroic{background:rgba(41,128,185,.15);border:1px solid rgba(41,128,185,.4);color:#69CCF0;}
+.loot-cand{display:flex;align-items:center;gap:9px;padding:11px 13px;border:1px solid var(--border);margin-bottom:6px;background:rgba(0,0,0,.2);cursor:pointer;transition:all .12s;}
+.loot-cand:hover{border-color:rgba(200,168,75,.3);}
+.loot-cand.sr-c{border-color:rgba(107,63,160,.6);background:rgba(107,63,160,.1);}
+.loot-cand.winner{border-color:var(--gold);background:rgba(200,168,75,.1);}
+.btn{padding:9px 15px;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;}
+.btn-primary{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#06030f;font-weight:700;}
+.btn-primary:hover{background:linear-gradient(135deg,var(--gold),var(--gold-light));}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-success{background:rgba(39,174,96,.2);border:1px solid rgba(39,174,96,.5);color:#2ecc71;}
+.btn-heroic{background:rgba(41,128,185,.2);border:1px solid rgba(41,128,185,.5);color:#69CCF0;}
+.btn-full{width:100%;}
+.btn-sm{padding:5px 10px;font-size:.58rem;min-height:28px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.form-group{margin-bottom:10px;}
+.form-label{display:block;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.form-input{width:100%;background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--text);padding:10px 13px;font-family:'Crimson Pro',serif;font-size:1rem;outline:none;transition:border-color .2s;border-radius:0;}
+.form-input:focus{border-color:var(--gold);}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border-s),transparent);margin:12px 0;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border-s);padding:24px 20px;max-width:500px;width:100%;position:relative;max-height:92vh;overflow-y:auto;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.modal-title{font-family:'Cinzel',serif;font-size:.93rem;color:var(--gold);margin-bottom:14px;letter-spacing:.06em;}
+.modal-close{position:absolute;top:13px;right:13px;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;padding:4px;}
+.empty-state{text-align:center;padding:36px 20px;color:var(--muted);}
+.empty-icon{font-size:2.2rem;opacity:.25;margin-bottom:9px;}
+.empty-txt{font-size:.83rem;font-style:italic;}
+#loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.spin{font-size:2.8rem;animation:rot 2s linear infinite;}
+@keyframes rot{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.loading-txt{font-family:'Cinzel',serif;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-size:.78rem;}
+@media(max-width:700px){.page-header{flex-direction:column;align-items:flex-start;}}
+</style>
+</head>
+<body>
+<div id="loading-overlay"><div class="spin">⚔</div><div class="loading-txt">Lade Dungeons...</div></div>
+<div id="navbar-container"></div>
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">PvE</div>
+      <h1 class="page-title">Dungeon Tracker</h1>
+      <p class="page-subtitle">Alle TBC Dungeons · Normal &amp; Heroic · 25 EP pro Run</p>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><span class="stat-num" id="st-runs">0</span><span class="stat-label">Runs gesamt</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-heroic">0</span><span class="stat-label">Heroic Runs</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-items">0</span><span class="stat-label">Items vergeben</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-ep">0</span><span class="stat-label">EP vergeben</span></div>
+  </div>
+  <div id="active-banner" style="display:none;"></div>
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-title">🗺 Instanz wählen</div>
+      <div class="type-tabs">
+        <button class="type-tab tab-normal active" onclick="setTypeTab('dungeon',this)">🗡 Normal</button>
+        <button class="type-tab tab-heroic" onclick="setTypeTab('heroic',this)">💀 Heroic</button>
+      </div>
+      <div class="dungeon-list" id="dungeon-list"></div>
+    </div>
+    <div class="main-content" id="main-content">
+      <div class="no-selection">
+        <div class="no-sel-icon">🗡</div>
+        <div class="no-sel-txt">Wähle einen Dungeon aus der Liste links<br>um einen Run zu starten.</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:28px;">
+    <div style="font-family:'Cinzel',serif;font-size:.83rem;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+      📜 Run-Historie <span style="font-size:.6rem;color:var(--muted);margin-left:8px;">(<span id="hist-count">0</span> Runs)</span>
+    </div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="m-loot">
+  <div class="modal">
+    <button class="modal-close" onclick="closeM('m-loot')">×</button>
+    <div class="modal-title">⚡ Loot Vergabe</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:.6rem;color:var(--muted);font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;">Item</div>
+      <div id="m-loot-item" style="font-size:.93rem;font-weight:600;color:var(--gold);"></div>
+    </div>
+    <div style="font-size:.6rem;color:var(--muted);font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Gruppe</div>
+    <div id="m-loot-cands"></div>
+    <div style="background:rgba(200,168,75,.05);border:1px solid var(--border);padding:9px 12px;margin:10px 0;font-size:.78rem;color:var(--muted);">
+      <strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:.6rem;">REGEL:</strong>
+      SR gewinnt auto. Mehrere SR: höchste PR. Kein SR: höchste PR.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" style="flex:1;" onclick="confirmLoot()">✅ Bestätigen</button>
+      <button class="btn btn-ghost" onclick="closeM('m-loot')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+let G=null,saveTimer=null,curType='dungeon',selInstId=null,selItem=null,modalWinner=null;
+let tempGroup=[];
+const CI={warrior:'⚔',paladin:'🛡',hunter:'🏹',rogue:'🗡',priest:'✨',shaman:'⚡',mage:'🔮',warlock:'💀',druid:'🌿'};
+const RI={tank:'🛡',healer:'💚',dps:'⚔'};
+
+(async()=>{
+  G=await guildLoad();
+  document.getElementById('navbar-style').textContent=NAVBAR_CSS;
+  document.getElementById('navbar-container').innerHTML=buildNavbar('dungeon',G.guildName);
+  renderStats();renderDungeonList();renderHistory();
+  document.getElementById('loading-overlay').style.display='none';
+})();
+
+function qSave(){setSaveIndicator('saving');clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{await guildSave(G);setSaveIndicator('ok');},500);}
+
+function renderStats(){
+  const r=G.dungeonRuns||[];
+  document.getElementById('st-runs').textContent=r.length;
+  document.getElementById('st-heroic').textContent=r.filter(x=>x.instType==='heroic').length;
+  document.getElementById('st-items').textContent=r.flatMap(x=>x.loot||[]).length;
+  document.getElementById('st-ep').textContent=r.length*25;
+  document.getElementById('hist-count').textContent=r.length;
+}
+
+function setTypeTab(type,btn){
+  curType=type;
+  document.querySelectorAll('.type-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  selInstId=null;
+  document.getElementById('main-content').innerHTML='<div class="no-selection"><div class="no-sel-icon">🗡</div><div class="no-sel-txt">Wähle einen Dungeon aus der Liste links.</div></div>';
+  renderDungeonList();
+}
+
+function renderDungeonList(){
+  const list=TBC_INSTANCES.filter(i=>i.type===curType);
+  const runs=G.dungeonRuns||[];
+  document.getElementById('dungeon-list').innerHTML=list.map(inst=>{
+    const count=runs.filter(r=>r.instId===inst.id).length;
+    const isSel=inst.id===selInstId;
+    return '<div class="dungeon-entry'+(isSel?' selected':'')+(isSel&&curType==='heroic'?' heroic-sel':'')+'" onclick="selectInst(\''+inst.id+'\')">'
+      +'<span class="dungeon-icon">'+inst.icon+'</span>'
+      +'<div class="dungeon-info"><div class="dungeon-name">'+inst.name+'</div><div class="dungeon-zone">'+inst.zone+'</div></div>'
+      +(count>0?'<span class="dungeon-runs-count">'+count+'x</span>':'')
+      +'</div>';
+  }).join('');
+}
+
+function selectInst(id){selInstId=id;selItem=null;tempGroup=[];renderDungeonList();renderMain();}
+
+function renderMain(){
+  if(!selInstId)return;
+  const inst=getInstance(selInstId);
+  if(!inst)return;
+  const isHeroic=inst.type==='heroic';
+  const active=G.activeDungeon;
+  const isActive=active&&active.instId===selInstId;
+  if(active){
+    const ai=getInstance(active.instId);
+    document.getElementById('active-banner').style.display='block';
+    document.getElementById('active-banner').innerHTML='<div class="active-run-banner"><div class="arb-title">🗡 Aktiver Run — '+(ai?ai.name:'?')+' <span class="type-badge '+(active.instType==='heroic'?'tb-heroic':'tb-normal')+'">'+(active.instType==='heroic'?'Heroic':'Normal')+'</span></div><div class="arb-sub">'+(active.group||[]).map(id=>{const m=G.members.find(x=>x.id===id);return m?m.name:'?';}).join(', ')+' · 25 EP am Ende</div></div>';
+  } else {
+    document.getElementById('active-banner').style.display='none';
+  }
+  document.getElementById('main-content').innerHTML=isActive?renderActiveRun(inst,active,isHeroic):renderSetup(inst,isHeroic);
+  const rd=document.getElementById('run-date');
+  if(rd&&!rd.value)rd.valueAsDate=new Date();
+}
+
+function renderSetup(inst,isHeroic){
+  const memberOpts=G.members.map(m=>'<div class="picker-item'+(tempGroup.includes(m.id)?' in-group':'')+'" onclick="addToGroup(\''+m.id+'\')">'
+    +'<span style="color:'+classColor(m.cls)+';">'+CI[m.cls]+'</span>'
+    +'<span style="color:'+classColor(m.cls)+';font-weight:600;">'+m.name+'</span>'
+    +roleBadge(m.role)+'</div>').join('');
+  return '<div class="card'+(isHeroic?' heroic-card':'')+'"><div class="card-title"><span>'+inst.icon+' '+inst.name+'</span>'
+    +'<span class="type-badge '+(isHeroic?'tb-heroic':'tb-normal')+'">'+(isHeroic?'Heroic':'Normal')+' · 5er</span></div>'
+    +'<div style="font-family:\'Cinzel\',serif;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">5er Gruppe</div>'
+    +'<div class="group-slots" id="group-slots">'+renderGroupSlots()+'</div>'
+    +'<div class="member-picker" id="member-picker"><div class="picker-title">Mitglied hinzufügen</div>'
+    +'<div class="picker-list" id="picker-list">'+(G.members.length?memberOpts:'<p style="color:var(--muted);font-size:.82rem;">Erst Mitglieder anlegen.</p>')+'</div></div>'
+    +'<div class="divider"></div>'
+    +'<div class="form-group"><label class="form-label">Datum</label><input class="form-input" type="date" id="run-date"/></div>'
+    +'<button class="btn '+(isHeroic?'btn-heroic':'btn-success')+' btn-full" onclick="startRun()">'+(isHeroic?'💀':'🗡')+' Run starten</button></div>'
+    +'<div class="card"><div class="card-title">📜 Bisherige Runs</div>'+renderInstHistory(inst.id)+'</div>';
+}
+
+function renderGroupSlots(){
+  let html='';
+  for(let i=0;i<5;i++){
+    const mid=tempGroup[i];
+    const m=mid?G.members.find(x=>x.id===mid):null;
+    if(m){html+='<div class="group-slot filled"><button class="group-slot-remove" onclick="removeFromGroup('+i+')">✕</button>'
+      +'<span class="group-slot-icon" style="color:'+classColor(m.cls)+';">'+CI[m.cls]+'</span>'
+      +'<span class="group-slot-name" style="color:'+classColor(m.cls)+';">'+m.name+'</span>'
+      +'<span class="group-slot-role">'+RI[m.role]+' '+ROLE_LABELS[m.role]+'</span></div>';}
+    else{html+='<div class="group-slot empty-slot"><span class="slot-add-icon">+</span><span class="slot-add-txt">Slot '+(i+1)+'</span></div>';}
+  }
+  return html;
+}
+
+function addToGroup(id){
+  if(tempGroup.includes(id))return;
+  if(tempGroup.length>=5){showToast('⚠ Gruppe voll! (max. 5)');return;}
+  tempGroup.push(id);
+  const gs=document.getElementById('group-slots');
+  const pl=document.getElementById('picker-list');
+  if(gs)gs.innerHTML=renderGroupSlots();
+  if(pl)pl.querySelectorAll('.picker-item').forEach(el=>{
+    const m=el.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    if(m)el.classList.toggle('in-group',tempGroup.includes(m));
+  });
+}
+function removeFromGroup(idx){
+  tempGroup.splice(idx,1);
+  const gs=document.getElementById('group-slots');
+  const pl=document.getElementById('picker-list');
+  if(gs)gs.innerHTML=renderGroupSlots();
+  if(pl)pl.querySelectorAll('.picker-item').forEach(el=>{
+    const m=el.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    if(m)el.classList.toggle('in-group',tempGroup.includes(m));
+  });
+}
+
+function startRun(){
+  const date=document.getElementById('run-date')?.value;
+  if(!date){showToast('⚠ Datum wählen!');return;}
+  if(!tempGroup.length){showToast('⚠ Mindestens 1 Mitglied!');return;}
+  if(G.activeDungeon){showToast('⚠ Erst aktiven Run beenden!');return;}
+  const inst=getInstance(selInstId);
+  G.activeDungeon={id:uid(),instId:selInstId,instName:inst.name,instType:inst.type,date,group:[...tempGroup],loot:[]};
+  tempGroup=[];
+  showToast('🗡 Run gestartet: '+inst.name+'!');
+  qSave();renderMain();renderStats();
+}
+
+function renderActiveRun(inst,active,isHeroic){
+  let itemsHtml=inst.bosses.map(b=>{
+    const its=b.items.map(it=>{
+      const given=active.loot.find(l=>l.itemId===it.id);
+      return '<div class="item-entry'+(selItem===it.id?' selected':'')+(given?' given':'')+'" onclick="pickItem(\''+it.id+'\')">'
+        +'<span class="q-'+it.q+'">◆</span>'
+        +'<span class="item-name q-'+it.q+'">'+it.name+'</span>'
+        +'<span style="font-size:.67rem;color:var(--muted);">'+it.slot+'</span>'
+        +'<span class="item-gp">'+it.gp+'GP</span>'
+        +(given?'<span style="color:var(--green);font-size:.73rem;">✓</span>':'')
+        +'</div>';
+    }).join('');
+    return '<div class="boss-section"><div class="boss-name">'+b.name+'</div>'+its+'</div>';
+  }).join('');
+  const selIt=selItem?ITEM_MAP[selItem]:null;
+  const selBoxHtml=selIt?'<div class="sel-box"><div class="sel-label">Ausgewählt</div><span class="q-'+selIt.q+'" style="font-size:.9rem;font-weight:600;">'+selIt.name+'</span> <span style="color:var(--muted);font-size:.76rem;">'+selIt.gp+' GP</span></div>':'';
+  const tonightHtml=active.loot.length?active.loot.map(l=>{
+    const it=ITEM_MAP[l.itemId],wn=G.members.find(m=>m.id===l.winnerId);
+    return '<div class="loot-entry"><span class="loot-item q-'+(it?it.q:'')+'">'+( it?it.name:l.itemId)+'</span>'
+      +'<span class="loot-tag '+(l.method==='sr'?'tag-sr':'tag-pr')+'">'+(l.method==='sr'?'🏆 SR':'⚡ PR')+'</span>'
+      +'<span class="loot-winner" style="color:'+(wn?classColor(wn.cls):'var(--muted)')+';">'+(wn?wn.name:'?')+'</span></div>';
+  }).join(''):'<div class="empty-state"><div class="empty-icon">🎲</div><div class="empty-txt">Noch kein Loot.</div></div>';
+
+  return '<div class="card'+(isHeroic?' heroic-card':'')+'"><div class="card-title"><span>🗡 Aktiver Run · '+inst.name+'</span>'
+    +'<span class="type-badge '+(isHeroic?'tb-heroic':'tb-normal')+'">'+(isHeroic?'Heroic':'Normal')+'</span></div>'
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">'
+    +(active.group||[]).map(id=>{const m=G.members.find(x=>x.id===id);return m?'<span style="font-size:.76rem;padding:3px 8px;background:rgba(0,0,0,.3);border:1px solid var(--border);color:'+classColor(m.cls)+';">'+CI[m.cls]+' '+m.name+'</span>':''}).join('')
+    +'</div>'
+    +'<button class="btn btn-success btn-full" style="margin-bottom:14px;" onclick="endRun()">✅ Run beenden &amp; 25 EP vergeben</button>'
+    +'<div style="font-family:\'Cinzel\',serif;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Item wählen &amp; verteilen</div>'
+    +itemsHtml+selBoxHtml
+    +'<button class="btn btn-primary btn-full" style="margin-top:7px;" onclick="openLootModal()">⚡ Loot verteilen</button></div>'
+    +'<div class="card"><div class="card-title">📋 Heutige Vergaben</div>'+tonightHtml+'</div>';
+}
+
+function endRun(){
+  if(!G.activeDungeon)return;
+  const run=G.activeDungeon;
+  run.group.forEach(id=>{const m=G.members.find(x=>x.id===id);if(m)m.ep+=25;});
+  if(!G.dungeonRuns)G.dungeonRuns=[];
+  G.dungeonRuns.push({...run});
+  G.activeDungeon=null;selItem=null;
+  showToast('✅ Run beendet! 25 EP für '+run.group.length+' Mitglieder!');
+  qSave();renderMain();renderStats();renderHistory();
+}
+
+function pickItem(id){selItem=id;renderMain();}
+
+function openLootModal(){
+  if(!selItem){showToast('⚠ Erst Item auswählen!');return;}
+  const item=ITEM_MAP[selItem];
+  const group=(G.activeDungeon?.group||[]).map(id=>G.members.find(m=>m.id===id)).filter(Boolean);
+  const srH=group.filter(m=>(G.softReserves[m.id]||[]).includes(selItem));
+  const oth=group.filter(m=>!(G.softReserves[m.id]||[]).includes(selItem));
+  srH.sort((a,b)=>PR(b.ep,b.gp)-PR(a.ep,a.gp));
+  oth.sort((a,b)=>PR(b.ep,b.gp)-PR(a.ep,a.gp));
+  modalWinner=srH.length?srH[0].id:oth.length?oth[0].id:null;
+  document.getElementById('m-loot-item').innerHTML='<span class="q-'+item.q+'">'+item.name+'</span> <span style="color:var(--muted);font-size:.76rem;">'+item.gp+' GP · '+item.bossName+'</span>';
+  document.getElementById('m-loot-cands').innerHTML=[...srH,...oth].map(m=>{
+    const isSR=srH.includes(m),isW=m.id===modalWinner,p=PR(m.ep,m.gp);
+    return '<div class="loot-cand'+(isSR?' sr-c':'')+(isW?' winner':'')+'" onclick="pickWinner(\''+m.id+'\')" id="cand-'+m.id+'">'
+      +'<span style="font-size:.9rem;flex-shrink:0;">'+(isSR?'🏆':'　')+'</span>'
+      +'<span style="font-weight:600;flex:1;color:'+classColor(m.cls)+';">'+m.name+'</span>'
+      +roleBadge(m.role)
+      +'<span style="font-size:.68rem;color:var(--muted);">EP:'+m.ep+'</span>'
+      +'<span style="font-family:\'Cinzel\',serif;color:var(--gold);font-size:.8rem;">PR '+f2(p)+'</span>'
+      +(isSR&&srH.length===1?'<span style="color:var(--gold);font-size:.56rem;font-family:\'Cinzel\',serif;">AUTO</span>':'')
+      +'</div>';
+  }).join('')||'<p style="color:var(--muted);">Keine Mitglieder im Run.</p>';
+  openM('m-loot');
+}
+
+function pickWinner(id){
+  modalWinner=id;
+  document.querySelectorAll('.loot-cand').forEach(el=>el.classList.remove('winner'));
+  document.getElementById('cand-'+id)?.classList.add('winner');
+}
+
+function confirmLoot(){
+  if(!modalWinner||!selItem)return;
+  const it=ITEM_MAP[selItem],wn=G.members.find(m=>m.id===modalWinner);
+  if(!it||!wn)return;
+  const isSR=(G.softReserves[wn.id]||[]).includes(selItem);
+  wn.gp+=it.gp;
+  G.activeDungeon.loot.push({itemId:selItem,winnerId:wn.id,method:isSR?'sr':'pr',gpCost:it.gp,date:G.activeDungeon.date});
+  closeM('m-loot');showToast('🎉 '+wn.name+' erhält '+it.name+'!');
+  selItem=null;qSave();renderMain();renderStats();
+}
+
+function renderHistory(){
+  const runs=[...(G.dungeonRuns||[])].reverse();
+  const el=document.getElementById('history-list');
+  if(!runs.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📜</div><div class="empty-txt">Noch keine abgeschlossenen Runs.</div></div>';return;}
+  el.innerHTML=runs.map((run,idx)=>{
+    const inst=getInstance(run.instId);
+    const loot=run.loot||[];
+    return '<div class="history-run"><div class="history-run-header" onclick="toggleRH('+idx+')">'
+      +'<span style="font-size:1.1rem;">'+(inst?inst.icon:'🗡')+'</span>'
+      +'<span class="hr-inst">'+(inst?inst.name:run.instName)+'</span>'
+      +'<span class="type-badge '+(run.instType==='heroic'?'tb-heroic':'tb-normal')+'">'+(run.instType==='heroic'?'H':'N')+'</span>'
+      +'<span class="hr-date">📅 '+run.date+'</span>'
+      +'<span class="hr-ep">+25 EP</span>'
+      +'<span class="hr-items">'+loot.length+' Items</span>'
+      +'<span class="hr-toggle" id="tog-'+idx+'">▼</span></div>'
+      +'<div class="history-run-body" id="rb-'+idx+'">'
+      +'<div style="font-family:\'Cinzel\',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">Gruppe</div>'
+      +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;">'
+      +(run.group||[]).map(id=>{const m=G.members.find(x=>x.id===id);return m?'<span style="font-size:.72rem;padding:2px 8px;background:rgba(0,0,0,.3);border:1px solid var(--border);color:'+classColor(m.cls)+';">'+CI[m.cls]+' '+m.name+'</span>':''}).join('')
+      +'</div>'
+      +(loot.length?'<div style="font-family:\'Cinzel\',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">Loot</div>'
+        +loot.map(l=>{const it=ITEM_MAP[l.itemId],wn=G.members.find(m=>m.id===l.winnerId);return '<div class="loot-entry"><span class="loot-item q-'+(it?it.q:'')+'">'+( it?it.name:l.itemId)+'</span><span class="loot-tag '+(l.method==='sr'?'tag-sr':'tag-pr')+'">'+(l.method==='sr'?'🏆 SR':'⚡ PR')+'</span><span class="loot-winner" style="color:'+(wn?classColor(wn.cls):'var(--muted)')+';">'+(wn?wn.name:'?')+'</span></div>';}).join('')
+        :'')
+      +'</div></div>';
+  }).join('');
+}
+
+function toggleRH(idx){
+  const b=document.getElementById('rb-'+idx);
+  const t=document.getElementById('tog-'+idx);
+  b.classList.toggle('open');
+  t.style.transform=b.classList.contains('open')?'rotate(180deg)':'';
+}
+
+function renderInstHistory(instId){
+  const runs=(G.dungeonRuns||[]).filter(r=>r.instId===instId).reverse();
+  if(!runs.length)return '<div class="empty-state" style="padding:18px;"><div class="empty-icon" style="font-size:1.8rem;">📜</div><div class="empty-txt">Noch kein Run.</div></div>';
+  return runs.slice(0,4).map(run=>{
+    const loot=run.loot||[];
+    return '<div style="padding:7px 0;border-bottom:1px solid var(--border);">'
+      +'<div style="display:flex;gap:7px;align-items:center;margin-bottom:4px;">'
+      +'<span class="type-badge '+(run.instType==='heroic'?'tb-heroic':'tb-normal')+'">'+(run.instType==='heroic'?'Heroic':'Normal')+'</span>'
+      +'<span style="font-size:.76rem;color:var(--muted);">📅 '+run.date+'</span>'
+      +'<span style="font-size:.7rem;color:#82e0aa;margin-left:auto;">+25 EP · '+loot.length+' Items</span></div>'
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap;">'
+      +(run.group||[]).map(id=>{const m=G.members.find(x=>x.id===id);return m?'<span style="font-size:.68rem;padding:2px 7px;background:rgba(0,0,0,.3);border:1px solid var(--border);color:'+classColor(m.cls)+';">'+m.name+'</span>':''}).join('')
+      +'</div></div>';
+  }).join('');
+}
+
+const openM=id=>document.getElementById(id).classList.add('open');
+const closeM=id=>document.getElementById(id).classList.remove('open');
+</script>
+</body>
+</html>
