@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0510">
+<title>Gruppen-Statistiken — TBC Guild Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style id="navbar-style"></style>
+<style>
+:root{
+  --gold:#c8a84b;--gold-light:#f0d070;--gold-dark:#8a6a1a;
+  --bg:#06030f;--bg2:#0e0820;--bg3:#160d2e;
+  --text:#e8dcc8;--muted:#7a6a50;
+  --border:rgba(200,168,75,.18);--border-s:rgba(200,168,75,.45);
+  --green:#27ae60;--red:#c0392b;--blue:#2980b9;--purple:#9482C9;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',serif;font-size:16px;min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 55% 35% at 15% 20%,rgba(148,130,201,.1) 0%,transparent 60%),
+    radial-gradient(ellipse 45% 35% at 85% 75%,rgba(200,168,75,.07) 0%,transparent 60%);}
+.page-wrap{max-width:1300px;margin:0 auto;padding:28px 20px 60px;}
+
+/* HEADER */
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:26px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.page-eyebrow{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:5px;}
+.page-title{font-family:'Cinzel',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;color:var(--gold-light);letter-spacing:.04em;}
+.page-subtitle{font-size:.88rem;color:var(--muted);margin-top:3px;}
+
+/* TABS */
+.main-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px;overflow-x:auto;}
+.main-tabs::-webkit-scrollbar{display:none;}
+.main-tab{padding:11px 18px;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .15s;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0;}
+.main-tab:hover{color:var(--gold);}
+.main-tab.active{color:var(--gold-light);border-bottom-color:var(--gold);}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:24px;}
+@media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);padding:14px 10px;text-align:center;position:relative;}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-dark),transparent);}
+.stat-num{font-family:'Cinzel',serif;font-size:1.9rem;font-weight:700;color:var(--gold);line-height:1;display:block;}
+.stat-label{font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;font-family:'Cinzel',serif;display:block;}
+
+/* CARDS */
+.card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);padding:18px;margin-bottom:16px;position:relative;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-dark),var(--gold),var(--gold-dark),transparent);}
+.card-title{font-family:'Cinzel',serif;font-size:.8rem;font-weight:600;color:var(--gold);letter-spacing:.08em;margin-bottom:14px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:800px){.two-col{grid-template-columns:1fr;}}
+
+/* CHEMIE MATRIX */
+.matrix-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.matrix-wrap::-webkit-scrollbar{height:4px;}
+.matrix-wrap::-webkit-scrollbar-thumb{background:var(--gold-dark);}
+.matrix-table{border-collapse:collapse;font-size:.72rem;}
+.matrix-table th{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;color:var(--muted);padding:6px 8px;text-align:center;white-space:nowrap;position:sticky;top:0;background:var(--bg2);}
+.matrix-table th.row-header{text-align:right;position:sticky;left:0;background:var(--bg2);z-index:2;padding-right:12px;}
+.matrix-table td{width:36px;height:36px;text-align:center;border:1px solid rgba(200,168,75,.07);position:relative;cursor:default;}
+.matrix-table td.self{background:rgba(0,0,0,.3);}
+.matrix-table td.row-label{font-size:.72rem;font-weight:600;white-space:nowrap;padding-right:12px;text-align:right;position:sticky;left:0;background:var(--bg2);z-index:1;border:none;}
+.matrix-cell{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:.72rem;font-weight:700;transition:transform .15s;}
+.matrix-cell:hover{transform:scale(1.2);}
+.heat-0{background:rgba(0,0,0,.2);}
+.heat-1{background:rgba(200,168,75,.12);}
+.heat-2{background:rgba(200,168,75,.25);}
+.heat-3{background:rgba(200,168,75,.4);}
+.heat-4{background:rgba(200,168,75,.6);}
+.heat-5{background:rgba(200,168,75,.8);}
+
+/* COMBO CARDS */
+.combo-card{background:rgba(0,0,0,.25);border:1px solid var(--border);padding:13px 15px;margin-bottom:9px;display:flex;align-items:center;gap:12px;transition:border-color .2s;}
+.combo-card:hover{border-color:rgba(200,168,75,.35);}
+.combo-rank{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:900;color:transparent;-webkit-text-stroke:1px rgba(200,168,75,.4);flex-shrink:0;min-width:28px;}
+.combo-members{flex:1;display:flex;gap:6px;flex-wrap:wrap;}
+.combo-member{font-size:.76rem;padding:3px 9px;background:rgba(0,0,0,.3);border:1px solid var(--border);}
+.combo-count{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold);flex-shrink:0;}
+.combo-inst{font-size:.65rem;color:var(--muted);flex-shrink:0;}
+
+/* ROLLE COMBOS */
+.role-combo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px;}
+.role-combo-card{background:rgba(0,0,0,.25);border:1px solid var(--border);padding:13px 14px;}
+.rcc-title{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;}
+.rcc-roles{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.rcc-badge{font-size:.68rem;padding:3px 9px;font-family:'Cinzel',serif;}
+.rb-tank{background:rgba(41,128,185,.2);border:1px solid rgba(41,128,185,.5);color:#7fb3d3;}
+.rb-healer{background:rgba(39,174,96,.2);border:1px solid rgba(39,174,96,.5);color:#82e0aa;}
+.rb-dps{background:rgba(192,57,43,.2);border:1px solid rgba(192,57,43,.5);color:#e59866;}
+.rcc-names{font-size:.78rem;color:var(--text);line-height:1.6;}
+.rcc-count{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);margin-top:5px;}
+
+/* INSTANZ BARS */
+.inst-bar-entry{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid rgba(200,168,75,.07);}
+.inst-bar-entry:last-child{border-bottom:none;}
+.inst-bar-icon{font-size:1.1rem;flex-shrink:0;width:22px;text-align:center;}
+.inst-bar-name{font-size:.82rem;min-width:160px;flex-shrink:0;}
+.inst-bar-wrap{flex:1;height:6px;background:rgba(0,0,0,.4);}
+.inst-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .4s ease;}
+.inst-bar-count{font-family:'Cinzel',serif;font-size:.72rem;color:var(--gold);min-width:28px;text-align:right;flex-shrink:0;}
+.inst-type-badge{font-size:.55rem;padding:1px 6px;font-family:'Cinzel',serif;flex-shrink:0;}
+.tb-raid{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);color:#e59866;}
+.tb-dungeon{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.35);color:#82e0aa;}
+.tb-heroic{background:rgba(41,128,185,.12);border:1px solid rgba(41,128,185,.35);color:#69CCF0;}
+
+/* PLAYER DETAIL */
+.player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px;}
+.player-sel-card{background:rgba(0,0,0,.3);border:1px solid var(--border);padding:12px 14px;cursor:pointer;transition:all .15s;}
+.player-sel-card:hover{border-color:rgba(200,168,75,.4);background:rgba(200,168,75,.05);}
+.player-sel-card.active{border-color:var(--gold);background:rgba(200,168,75,.08);}
+.psc-name{font-weight:600;font-size:.88rem;margin-bottom:3px;}
+.psc-runs{font-size:.72rem;color:var(--muted);}
+.player-detail{background:rgba(0,0,0,.2);border:1px solid var(--border);padding:16px;margin-top:4px;}
+.pd-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.pd-icon{font-size:2.2rem;}
+.pd-name{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;}
+.pd-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.pd-stat{text-align:center;padding:10px 6px;background:rgba(0,0,0,.3);border:1px solid var(--border);}
+.pd-stat-num{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);display:block;}
+.pd-stat-lbl{font-size:.58rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-family:'Cinzel',serif;display:block;margin-top:2px;}
+.pd-partners-title{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.pd-partner{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(200,168,75,.07);}
+.pd-partner:last-child{border-bottom:none;}
+.pd-p-name{flex:1;font-size:.84rem;font-weight:600;}
+.pd-p-count{font-family:'Cinzel',serif;font-size:.82rem;color:var(--gold);}
+.pd-p-bar-wrap{width:80px;height:3px;background:rgba(0,0,0,.4);}
+.pd-p-bar{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty-icon{font-size:2.8rem;opacity:.22;margin-bottom:10px;}
+.empty-txt{font-size:.88rem;font-style:italic;line-height:1.7;}
+
+/* LOADING */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.spin{font-size:2.8rem;animation:rot 2s linear infinite;}
+@keyframes rot{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.loading-txt{font-family:'Cinzel',serif;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-size:.78rem;}
+@media(max-width:700px){.page-header{flex-direction:column;align-items:flex-start;}}
+</style>
+</head>
+<body>
+<div id="loading-overlay"><div class="spin">⚔</div><div class="loading-txt">Lade Statistiken...</div></div>
+<div id="navbar-container"></div>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Analyse</div>
+      <h1 class="page-title">Gruppen-Statistiken</h1>
+      <p class="page-subtitle">Chemie · Bewährte Gruppen · Rollen-Kombinationen · Instanz-Auswertung</p>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><span class="stat-num" id="st-total-runs">0</span><span class="stat-label">Runs gesamt</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-unique-groups">0</span><span class="stat-label">Gruppen-Combos</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-top-inst">—</span><span class="stat-label">Top Instanz</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-top-player">—</span><span class="stat-label">Aktivster Spieler</span></div>
+  </div>
+
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="showTab('chemie',this)">🔥 Chemie-Matrix</button>
+    <button class="main-tab" onclick="showTab('combos',this)">⚔ Bewährte Gruppen</button>
+    <button class="main-tab" onclick="showTab('rollen',this)">🛡 Rollen-Kombos</button>
+    <button class="main-tab" onclick="showTab('instanzen',this)">🗺 Instanzen</button>
+    <button class="main-tab" onclick="showTab('spieler',this)">👤 Pro Spieler</button>
+  </div>
+
+  <div id="tab-chemie"></div>
+  <div id="tab-combos"   style="display:none;"></div>
+  <div id="tab-rollen"   style="display:none;"></div>
+  <div id="tab-instanzen"style="display:none;"></div>
+  <div id="tab-spieler"  style="display:none;"></div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+let G=null, selPlayerId=null;
+const CI={warrior:'⚔',paladin:'🛡',hunter:'🏹',rogue:'🗡',priest:'✨',shaman:'⚡',mage:'🔮',warlock:'💀',druid:'🌿'};
+
+// Sicherheits-Fallback: loading-overlay nach 3s immer ausblenden
+setTimeout(() => { const lo = document.getElementById('loading-overlay'); if(lo) lo.style.display='none'; }, 3000);
+
+(async()=>{
+  G=await guildLoad();
+  if(!G.dungeonRuns) G.dungeonRuns=[];
+  if(!G.raidEvents)  G.raidEvents=[];
+  document.getElementById('navbar-style').textContent=NAVBAR_CSS;
+  document.getElementById('navbar-container').innerHTML=buildNavbar('groups',G.guildName);
+  const runs=getAllRuns();
+  renderStats(runs);
+  renderChemie(runs);
+  document.getElementById('loading-overlay').style.display='none';
+})();
+
+// ── DATEN ────────────────────────────────────────────────────────
+// Alle Runs: Dungeon-Runs + Raid-Termine (nur bestätigte)
+function getAllRuns(){
+  const runs=[];
+  // Dungeon Runs
+  (G.dungeonRuns||[]).forEach(r=>{
+    if((r.group||[]).length>0)
+      runs.push({id:r.id,instId:r.instId,instType:r.instType,date:r.date,members:r.group,source:'dungeon'});
+  });
+  // Raid-Termine (nur ja-Anmeldungen)
+  (G.raidEvents||[]).forEach(e=>{
+    const yes=Object.entries(e.signups||{}).filter(([,s])=>s.status==='yes').map(([id])=>id);
+    if(yes.length>0)
+      runs.push({id:e.id,instId:e.raidId,instType:'raid',date:e.date,members:yes,source:'raid'});
+  });
+  return runs;
+}
+
+// Paarweise Chemie: wie oft waren A und B zusammen?
+function buildChemieMap(runs){
+  const map={}; // map[idA][idB] = count
+  runs.forEach(r=>{
+    const members=r.members.filter(id=>G.members.find(m=>m.id===id));
+    for(let i=0;i<members.length;i++){
+      for(let j=i+1;j<members.length;j++){
+        const a=members[i],b=members[j];
+        if(!map[a])map[a]={};if(!map[b])map[b]={};
+        map[a][b]=(map[a][b]||0)+1;
+        map[b][a]=(map[b][a]||0)+1;
+      }
+    }
+  });
+  return map;
+}
+
+// Gruppen-Combos (Fingerprint)
+function buildCombos(runs){
+  const map={};
+  runs.forEach(r=>{
+    const sorted=[...r.members].filter(id=>G.members.find(m=>m.id===id)).sort();
+    if(sorted.length<2)return;
+    const key=sorted.join('|');
+    if(!map[key])map[key]={members:sorted,count:0,insts:{}};
+    map[key].count++;
+    map[key].insts[r.instId]=(map[key].insts[r.instId]||0)+1;
+  });
+  return Object.values(map).sort((a,b)=>b.count-a.count);
+}
+
+// ── STATS ────────────────────────────────────────────────────────
+function renderStats(runs){
+  const combos=buildCombos(runs);
+  // Top instanz
+  const instCount={};
+  runs.forEach(r=>{instCount[r.instId]=(instCount[r.instId]||0)+1;});
+  const topInstId=Object.entries(instCount).sort((a,b)=>b[1]-a[1])[0]?.[0];
+  const topInst=topInstId?getInstance(topInstId):null;
+  // Top player
+  const playerCount={};
+  runs.forEach(r=>r.members.forEach(id=>{playerCount[id]=(playerCount[id]||0)+1;}));
+  const topPlayerId=Object.entries(playerCount).sort((a,b)=>b[1]-a[1])[0]?.[0];
+  const topPlayer=topPlayerId?G.members.find(m=>m.id===topPlayerId):null;
+
+  document.getElementById('st-total-runs').textContent=runs.length;
+  document.getElementById('st-unique-groups').textContent=combos.length;
+  document.getElementById('st-top-inst').textContent=topInst?topInst.icon:'-';
+  document.getElementById('st-top-inst').title=topInst?topInst.name:'';
+  document.getElementById('st-top-player').textContent=topPlayer?topPlayer.name.substring(0,6):'-';
+}
+
+// ── TABS ─────────────────────────────────────────────────────────
+function showTab(name,btn){
+  ['chemie','combos','rollen','instanzen','spieler'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+  });
+  document.querySelectorAll('.main-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const runs=getAllRuns();
+  if(name==='combos')   renderCombos(runs);
+  if(name==='rollen')   renderRollen(runs);
+  if(name==='instanzen')renderInstanzen(runs);
+  if(name==='spieler')  renderSpieler(runs);
+}
+
+// ── TAB: CHEMIE MATRIX ───────────────────────────────────────────
+function renderChemie(runs){
+  const el=document.getElementById('tab-chemie');
+  const members=G.members.filter(m=>runs.some(r=>r.members.includes(m.id)));
+  if(!runs.length||!members.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-txt">Noch keine Runs vorhanden.<br>Starte Dungeon-Runs oder trage Raid-Anmeldungen ein.</div></div>';
+    return;
+  }
+  const chemie=buildChemieMap(runs);
+  const maxVal=Math.max(...members.flatMap(a=>members.map(b=>a.id!==b.id?(chemie[a.id]?.[b.id]||0):0)));
+
+  function heatClass(val){
+    if(!val)return 'heat-0';
+    const pct=val/Math.max(maxVal,1);
+    if(pct>=.8)return 'heat-5';
+    if(pct>=.6)return 'heat-4';
+    if(pct>=.4)return 'heat-3';
+    if(pct>=.2)return 'heat-2';
+    return 'heat-1';
+  }
+
+  let table='<table class="matrix-table"><thead><tr><th class="row-header"></th>';
+  members.forEach(m=>{table+='<th title="'+m.name+'"><span style="color:'+classColor(m.cls)+';">'+m.name.substring(0,5)+'</span></th>';});
+  table+='</tr></thead><tbody>';
+  members.forEach(a=>{
+    table+='<tr><td class="row-label"><span style="color:'+classColor(a.cls)+';">'+CI[a.cls]+' '+a.name+'</span></td>';
+    members.forEach(b=>{
+      if(a.id===b.id){table+='<td class="self"><div class="matrix-cell" style="color:var(--muted);">—</div></td>';}
+      else{
+        const val=chemie[a.id]?.[b.id]||0;
+        table+='<td title="'+a.name+' & '+b.name+': '+val+' Runs"><div class="matrix-cell '+heatClass(val)+'" style="color:'+(val>0?'var(--text)':'var(--muted)')+';">'+(val||'·')+'</div></td>';
+      }
+    });
+    table+='</tr>';
+  });
+  table+='</tbody></table>';
+
+  el.innerHTML='<div class="card"><div class="card-title">🔥 Chemie-Matrix — Gemeinsame Runs pro Paar'
+    +'<span style="font-size:.65rem;color:var(--muted);font-family:\'Crimson Pro\',serif;font-weight:400;">Höhere Zahl = öfter zusammen gelaufen</span></div>'
+    +'<div class="matrix-wrap">'+table+'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center;">'
+    +'<span style="font-size:.62rem;color:var(--muted);font-family:\'Cinzel\',serif;letter-spacing:.08em;text-transform:uppercase;">Legende:</span>'
+    +['heat-0','heat-1','heat-2','heat-3','heat-4','heat-5'].map((c,i)=>'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.7rem;"><span class="'+c+'" style="width:16px;height:16px;display:inline-block;"></span>'+(i===0?'0':i===1?'1-2':i===2?'3-4':i===3?'5-6':i===4?'7-8':'9+')+'</span>').join('')
+    +'</div></div>';
+}
+
+// ── TAB: COMBOS ──────────────────────────────────────────────────
+function renderCombos(runs){
+  const el=document.getElementById('tab-combos');
+  const combos=buildCombos(runs).slice(0,20);
+  if(!combos.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">⚔</div><div class="empty-txt">Noch keine Gruppen-Daten.</div></div>';return;
+  }
+  const rows=combos.map((c,i)=>{
+    const members=c.members.map(id=>G.members.find(m=>m.id===id)).filter(Boolean);
+    const topInst=Object.entries(c.insts).sort((a,b)=>b[1]-a[1])[0];
+    const instObj=topInst?getInstance(topInst[0]):null;
+    return '<div class="combo-card">'
+      +'<span class="combo-rank">#'+(i+1)+'</span>'
+      +'<div class="combo-members">'
+      +members.map(m=>'<span class="combo-member" style="color:'+classColor(m.cls)+';">'+CI[m.cls]+' '+m.name+'</span>').join('')
+      +'</div>'
+      +(instObj?'<span class="combo-inst">'+instObj.icon+' '+instObj.name+'</span>':'')
+      +'<span class="combo-count">'+c.count+'×</span>'
+      +'</div>';
+  }).join('');
+  el.innerHTML='<div class="card"><div class="card-title">⚔ Bewährteste Gruppen-Kombinationen<span style="font-size:.65rem;color:var(--muted);">nach Anzahl gemeinsamer Runs</span></div>'+rows+'</div>';
+}
+
+// ── TAB: ROLLEN ──────────────────────────────────────────────────
+function renderRollen(runs){
+  const el=document.getElementById('tab-rollen');
+  if(!runs.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🛡</div><div class="empty-txt">Noch keine Runs.</div></div>';return;
+  }
+  // Für jeden Run: Rolle-Kombination ermitteln
+  const roleCombos={};
+  runs.forEach(r=>{
+    const memberObjs=r.members.map(id=>G.members.find(m=>m.id===id)).filter(Boolean);
+    const tanks=memberObjs.filter(m=>m.role==='tank');
+    const healers=memberObjs.filter(m=>m.role==='healer');
+    const dps=memberObjs.filter(m=>m.role==='dps');
+    // Key: tank-names | healer-names
+    const key=[
+      tanks.map(m=>m.name).sort().join('+'),
+      healers.map(m=>m.name).sort().join('+'),
+      dps.map(m=>m.name).sort().join('+'),
+    ].join('||');
+    if(!roleCombos[key])roleCombos[key]={tanks,healers,dps,count:0};
+    roleCombos[key].count++;
+  });
+  const sorted=Object.values(roleCombos).sort((a,b)=>b.count-a.count).slice(0,12);
+  const cards=sorted.map(c=>'<div class="role-combo-card">'
+    +'<div class="rcc-roles">'
+    +(c.tanks.length?'<span class="rcc-badge rb-tank">🛡 Tank</span>':'')
+    +(c.healers.length?'<span class="rcc-badge rb-healer">💚 Heiler</span>':'')
+    +(c.dps.length?'<span class="rcc-badge rb-dps">⚔ DPS</span>':'')
+    +'</div>'
+    +'<div class="rcc-names">'
+    +[...c.tanks,...c.healers,...c.dps].map(m=>'<span style="color:'+classColor(m.cls)+';">'+m.name+'</span>').join(', ')
+    +'</div>'
+    +'<div class="rcc-count">'+c.count+'× zusammen</div>'
+    +'</div>').join('');
+
+  // Häufigste Tank-Heiler Combos
+  const thCombos={};
+  runs.forEach(r=>{
+    const memberObjs=r.members.map(id=>G.members.find(m=>m.id===id)).filter(Boolean);
+    const tanks=memberObjs.filter(m=>m.role==='tank');
+    const healers=memberObjs.filter(m=>m.role==='healer');
+    tanks.forEach(t=>healers.forEach(h=>{
+      const key=t.id+'|'+h.id;
+      if(!thCombos[key])thCombos[key]={tank:t,healer:h,count:0};
+      thCombos[key].count++;
+    }));
+  });
+  const thSorted=Object.values(thCombos).sort((a,b)=>b.count-a.count).slice(0,8);
+  const thRows=thSorted.map(c=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(200,168,75,.07);">'
+    +'<span class="rcc-badge rb-tank" style="flex-shrink:0;">'+CI[c.tank.cls]+' <span style="color:'+classColor(c.tank.cls)+';">'+c.tank.name+'</span></span>'
+    +'<span style="color:var(--muted);">+</span>'
+    +'<span class="rcc-badge rb-healer" style="flex-shrink:0;">'+CI[c.healer.cls]+' <span style="color:'+classColor(c.healer.cls)+';">'+c.healer.name+'</span></span>'
+    +'<span style="flex:1;"></span>'
+    +'<span style="font-family:\'Cinzel\',serif;font-size:.82rem;color:var(--gold);">'+c.count+'×</span>'
+    +'</div>').join('');
+
+  el.innerHTML='<div class="two-col">'
+    +'<div class="card"><div class="card-title">🛡 Häufigste Tank+Heiler Kombinationen</div>'+(thRows||'<div style="color:var(--muted);font-size:.82rem;font-style:italic;">Keine Daten.</div>')+'</div>'
+    +'<div class="card"><div class="card-title">⚔ Top Rollen-Kombinationen gesamt</div><div class="role-combo-grid">'+cards+'</div></div>'
+    +'</div>';
+}
+
+// ── TAB: INSTANZEN ───────────────────────────────────────────────
+function renderInstanzen(runs){
+  const el=document.getElementById('tab-instanzen');
+  if(!runs.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🗺</div><div class="empty-txt">Noch keine Runs.</div></div>';return;
+  }
+  const instCount={};
+  runs.forEach(r=>{
+    if(!instCount[r.instId])instCount[r.instId]={count:0,type:r.instType};
+    instCount[r.instId].count++;
+  });
+  const sorted=Object.entries(instCount).sort((a,b)=>b[1].count-a[1].count);
+  const maxC=sorted[0]?.[1].count||1;
+
+  const bars=sorted.map(([instId,data])=>{
+    const inst=getInstance(instId);
+    const typeLabel={raid:'Raid',dungeon:'Normal',heroic:'Heroic'}[data.type]||data.type;
+    const typeClass={raid:'tb-raid',dungeon:'tb-dungeon',heroic:'tb-heroic'}[data.type]||'tb-dungeon';
+    return '<div class="inst-bar-entry">'
+      +'<span class="inst-bar-icon">'+(inst?inst.icon:'🗡')+'</span>'
+      +'<span class="inst-bar-name">'+(inst?inst.name:instId)+'</span>'
+      +'<span class="inst-type-badge '+typeClass+'">'+typeLabel+'</span>'
+      +'<div class="inst-bar-wrap"><div class="inst-bar-fill" style="width:'+Math.round((data.count/maxC)*100)+'%"></div></div>'
+      +'<span class="inst-bar-count">'+data.count+'×</span>'
+      +'</div>';
+  }).join('');
+
+  // Phase-Aufteilung
+  const phaseCount={};
+  runs.forEach(r=>{
+    const inst=getInstance(r.instId);
+    if(inst){const p='Phase '+inst.phase;phaseCount[p]=(phaseCount[p]||0)+1;}
+  });
+  const phaseRows=Object.entries(phaseCount).sort().map(([p,c])=>'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;">'
+    +'<span style="font-family:\'Cinzel\',serif;font-size:.72rem;color:var(--gold);min-width:60px;">'+p+'</span>'
+    +'<div class="inst-bar-wrap" style="flex:1;"><div class="inst-bar-fill" style="width:'+Math.round((c/runs.length)*100)+'%"></div></div>'
+    +'<span style="font-family:\'Cinzel\',serif;font-size:.7rem;color:var(--muted);">'+c+'×</span>'
+    +'</div>').join('');
+
+  el.innerHTML='<div class="two-col">'
+    +'<div class="card"><div class="card-title">🗺 Meistgelaufene Instanzen</div>'+bars+'</div>'
+    +'<div class="card"><div class="card-title">📊 Aufteilung nach Phase & Typ</div>'
+    +'<div style="margin-bottom:14px;">'+phaseRows+'</div>'
+    +'<div style="font-family:\'Cinzel\',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Typ</div>'
+    +'<div style="display:flex;gap:14px;">'
+    +['raid','dungeon','heroic'].map(t=>{
+      const c=runs.filter(r=>r.instType===t).length;
+      return '<div style="text-align:center;flex:1;">'
+        +'<div style="font-family:\'Cinzel\',serif;font-size:1.6rem;font-weight:700;color:var(--gold);">'+c+'</div>'
+        +'<div style="font-size:.62rem;color:var(--muted);font-family:\'Cinzel\',serif;letter-spacing:.08em;text-transform:uppercase;">'+{raid:'Raids',dungeon:'Normal',heroic:'Heroic'}[t]+'</div>'
+        +'</div>';
+    }).join('')
+    +'</div></div></div>';
+}
+
+// ── TAB: PRO SPIELER ─────────────────────────────────────────────
+function renderSpieler(runs){
+  const el=document.getElementById('tab-spieler');
+  const members=G.members;
+  if(!members.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-txt">Noch keine Mitglieder.</div></div>';return;
+  }
+  const chemie=buildChemieMap(runs);
+  const playerRuns={};
+  runs.forEach(r=>r.members.forEach(id=>{if(!playerRuns[id])playerRuns[id]=[];playerRuns[id].push(r);}));
+
+  // Spieler-Auswahl-Grid
+  const grid='<div class="player-grid">'
+    +members.map(m=>{
+      const runCount=(playerRuns[m.id]||[]).length;
+      return '<div class="player-sel-card'+(selPlayerId===m.id?' active':'')+'" onclick="selectPlayer(\''+m.id+'\')">'
+        +'<div class="psc-name" style="color:'+classColor(m.cls)+';">'+CI[m.cls]+' '+m.name+'</div>'
+        +'<div class="psc-runs" style="display:flex;gap:8px;margin-top:4px;">'
+        +'<span style="color:'+classColor(m.cls)+';font-size:.7rem;">'+className(m.cls)+'</span>'
+        +'<span style="color:var(--muted);font-size:.7rem;">·</span>'
+        +roleBadge(m.role)
+        +'</div>'
+        +'<div style="font-family:\'Cinzel\',serif;font-size:.75rem;color:var(--gold);margin-top:6px;">'+runCount+' Runs</div>'
+        +'</div>';
+    }).join('')
+    +'</div>';
+
+  // Detail-Bereich
+  let detail='<div style="text-align:center;padding:28px;color:var(--muted);font-style:italic;font-size:.88rem;">← Spieler auswählen</div>';
+  if(selPlayerId){
+    const m=G.members.find(x=>x.id===selPlayerId);
+    if(m){
+      const myRuns=playerRuns[m.id]||[];
+      const dungeonRuns=myRuns.filter(r=>r.instType!=='raid').length;
+      const raidRuns=myRuns.filter(r=>r.instType==='raid').length;
+      // Partner nach Häufigkeit
+      const partnerMap=chemie[m.id]||{};
+      const partners=Object.entries(partnerMap)
+        .map(([id,c])=>({m:G.members.find(x=>x.id===id),c}))
+        .filter(p=>p.m)
+        .sort((a,b)=>b.c-a.c)
+        .slice(0,8);
+      const maxPC=partners[0]?.c||1;
+      // Instanzen
+      const myInstCount={};
+      myRuns.forEach(r=>{myInstCount[r.instId]=(myInstCount[r.instId]||0)+1;});
+      const myInsts=Object.entries(myInstCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+      detail='<div class="player-detail">'
+        +'<div class="pd-header">'
+        +'<span class="pd-icon" style="color:'+classColor(m.cls)+';">'+CI[m.cls]+'</span>'
+        +'<div>'
+        +'<div class="pd-name" style="color:'+classColor(m.cls)+';">'+m.name+'</div>'
+        +'<div style="display:flex;gap:7px;margin-top:4px;">'+roleBadge(m.role)+'<span style="font-size:.75rem;color:'+classColor(m.cls)+';opacity:.8;">'+className(m.cls)+'</span></div>'
+        +'</div></div>'
+        +'<div class="pd-stats">'
+        +'<div class="pd-stat"><span class="pd-stat-num">'+myRuns.length+'</span><span class="pd-stat-lbl">Runs</span></div>'
+        +'<div class="pd-stat"><span class="pd-stat-num" style="color:#82e0aa;">'+dungeonRuns+'</span><span class="pd-stat-lbl">Dungeons</span></div>'
+        +'<div class="pd-stat"><span class="pd-stat-num" style="color:#e59866;">'+raidRuns+'</span><span class="pd-stat-lbl">Raids</span></div>'
+        +'</div>'
+        +'<div class="two-col">'
+        +'<div>'
+        +'<div class="pd-partners-title">🤝 Häufigste Partner</div>'
+        +(partners.length?partners.map(p=>'<div class="pd-partner">'
+          +'<span style="font-size:.88rem;">'+CI[p.m.cls]+'</span>'
+          +'<span class="pd-p-name" style="color:'+classColor(p.m.cls)+';">'+p.m.name+'</span>'
+          +'<div class="pd-p-bar-wrap"><div class="pd-p-bar" style="width:'+Math.round((p.c/maxPC)*100)+'%"></div></div>'
+          +'<span class="pd-p-count">'+p.c+'×</span>'
+          +'</div>').join('')
+          :'<div style="color:var(--muted);font-size:.8rem;font-style:italic;">Keine Partner-Daten.</div>')
+        +'</div>'
+        +'<div>'
+        +'<div class="pd-partners-title">🗺 Meistgelaufene Instanzen</div>'
+        +(myInsts.length?myInsts.map(([instId,c])=>{const inst=getInstance(instId);return '<div class="pd-partner">'
+          +'<span style="font-size:.9rem;">'+(inst?inst.icon:'🗡')+'</span>'
+          +'<span class="pd-p-name">'+(inst?inst.name:instId)+'</span>'
+          +'<span class="pd-p-count">'+c+'×</span>'
+          +'</div>';}).join('')
+          :'<div style="color:var(--muted);font-size:.8rem;font-style:italic;">Keine Instanz-Daten.</div>')
+        +'</div></div></div>';
+    }
+  }
+
+  el.innerHTML='<div class="card"><div class="card-title">👤 Spieler auswählen</div>'+grid+'</div>'
+    +'<div class="card" id="player-detail-card"><div class="card-title">📊 Detailansicht</div>'+detail+'</div>';
+}
+
+function selectPlayer(id){
+  selPlayerId=id;
+  const runs=getAllRuns();
+  renderSpieler(runs);
+}
+
+// ── NAVBAR LINK für groups.html hinzufügen ───────────────────────
+// (shared.js buildNavbar kennt 'groups' noch nicht, daher manuell)
+// Wir überschreiben buildNavbar lokal für diese Seite
+const _origBuildNavbar=buildNavbar;
+window.buildNavbar=function(active,guildName){
+  let html=_origBuildNavbar(active,guildName);
+  // Gruppen-Link in Desktop-Nav einfügen
+  html=html.replace(
+    '<a href="raid.html"',
+    '<a href="groups.html" class="navbar-link'+(active==='groups'?' active':'')+'" style="white-space:nowrap;">Gruppen</a><a href="raid.html"'
+  );
+  return html;
+};
+</script>
+</body>
+</html>
