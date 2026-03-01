@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0510">
+<title>Mitglieder — TBC Guild Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style id="navbar-style"></style>
+<style>
+:root {
+  --gold:#c8a84b; --gold-light:#f0d070; --gold-dark:#8a6a1a;
+  --bg:#06030f; --bg2:#0e0820; --bg3:#160d2e;
+  --text:#e8dcc8; --muted:#7a6a50;
+  --border:rgba(200,168,75,.18); --border-s:rgba(200,168,75,.45);
+  --green:#27ae60; --red:#c0392b;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',serif;font-size:16px;min-height:100vh;
+  background-image:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(107,63,160,.2) 0%,transparent 60%);}
+
+/* PAGE LAYOUT */
+.page-wrap{max-width:1300px;margin:0 auto;padding:32px 20px 60px;}
+
+/* PAGE HEADER */
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.page-header-left{}
+.page-eyebrow{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:6px;}
+.page-title{font-family:'Cinzel',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;color:var(--gold-light);letter-spacing:.04em;}
+.page-subtitle{font-size:.88rem;color:var(--muted);margin-top:4px;}
+.page-header-right{display:flex;gap:9px;flex-wrap:wrap;align-items:center;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+@media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);padding:16px 12px;text-align:center;position:relative;}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-dark),transparent);}
+.stat-num{font-family:'Cinzel',serif;font-size:2rem;font-weight:700;color:var(--gold);line-height:1;display:block;}
+.stat-label{font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;font-family:'Cinzel',serif;display:block;}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:9px;margin-bottom:22px;flex-wrap:wrap;align-items:center;}
+.filter-input{background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--text);padding:9px 13px;font-family:'Crimson Pro',serif;font-size:.92rem;outline:none;transition:border-color .2s;flex:1;min-width:160px;}
+.filter-input:focus{border-color:var(--gold);}
+.filter-select{background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--text);padding:9px 28px 9px 12px;font-family:'Crimson Pro',serif;font-size:.88rem;outline:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a7a60'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;}
+.filter-select option{background:var(--bg2);}
+.sort-pills{display:flex;gap:5px;flex-wrap:wrap;}
+.sort-pill{background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.sort-pill:hover{border-color:var(--gold);color:var(--gold);}
+.sort-pill.active{background:rgba(200,168,75,.12);border-color:var(--gold);color:var(--gold-light);}
+
+/* MEMBER GRID */
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+@media(max-width:480px){.member-grid{grid-template-columns:1fr;}}
+
+/* MEMBER CARD */
+.member-card{
+  background:linear-gradient(150deg,var(--bg2) 0%,var(--bg3) 100%);
+  border:1px solid var(--border);
+  position:relative;overflow:hidden;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+}
+.member-card:hover{border-color:rgba(200,168,75,.4);box-shadow:0 6px 32px rgba(0,0,0,.5);transform:translateY(-2px);}
+.member-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-dark),var(--gold),var(--gold-dark),transparent);}
+
+/* Klassenfarb-Streifen links */
+.member-card-stripe{position:absolute;top:0;left:0;bottom:0;width:3px;}
+
+.member-card-top{padding:16px 16px 12px;display:flex;align-items:flex-start;gap:12px;}
+.member-avatar{
+  width:46px;height:46px;border-radius:0;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;background:rgba(0,0,0,.4);border:1px solid var(--border);
+  position:relative;
+}
+.member-avatar-role{
+  position:absolute;bottom:-6px;right:-6px;
+  width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;border:1px solid rgba(0,0,0,.5);
+}
+.role-tank   .member-avatar-role{background:#2980b9;}
+.role-healer .member-avatar-role{background:#27ae60;}
+.role-dps    .member-avatar-role{background:#c0392b;}
+
+.member-info{flex:1;min-width:0;}
+.member-name{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.member-class-role{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.member-class{font-size:.78rem;}
+.role-badge{display:inline-block;padding:2px 7px;font-size:.58rem;font-family:'Cinzel',serif;letter-spacing:.05em;}
+.rb-tank   {background:rgba(41,128,185,.3);border:1px solid rgba(41,128,185,.6);color:#7fb3d3;}
+.rb-healer {background:rgba(39,174,96,.3); border:1px solid rgba(39,174,96,.6); color:#82e0aa;}
+.rb-dps    {background:rgba(192,57,43,.3); border:1px solid rgba(192,57,43,.6); color:#e59866;}
+
+.member-card-actions{display:flex;gap:5px;margin-left:auto;flex-shrink:0;}
+
+/* EPGP SECTION */
+.member-epgp{
+  padding:10px 16px;
+  background:rgba(0,0,0,.2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:0;
+}
+.epgp-stat{flex:1;text-align:center;padding:4px 0;}
+.epgp-stat+.epgp-stat{border-left:1px solid var(--border);}
+.epgp-val{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--gold);display:block;line-height:1;}
+.epgp-lbl{font-size:.56rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:'Cinzel',serif;margin-top:2px;display:block;}
+.epgp-pr .epgp-val{color:var(--gold-light);font-size:1.3rem;}
+
+/* PR BAR */
+.member-pr-bar{padding:8px 16px 4px;}
+.pr-bar-wrap{height:4px;background:rgba(0,0,0,.4);position:relative;}
+.pr-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .4s ease;}
+.pr-bar-label{display:flex;justify-content:space-between;margin-top:3px;}
+.pr-bar-rank{font-size:.56rem;color:var(--muted);font-family:'Cinzel',serif;}
+
+/* SR SECTION */
+.member-sr{padding:10px 16px 12px;}
+.member-sr-title{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.sr-chips{display:flex;gap:4px;flex-wrap:wrap;}
+.sr-chip{padding:3px 9px;font-size:.7rem;background:rgba(107,63,160,.2);border:1px solid rgba(107,63,160,.35);}
+.sr-chip.q-epic{color:#a335ee;border-color:rgba(163,53,238,.3);}
+.sr-chip.q-rare{color:#0070dd;border-color:rgba(0,112,221,.3);}
+.sr-chip.q-uncommon{color:#1eff00;border-color:rgba(30,255,0,.3);}
+.sr-empty{font-size:.75rem;color:var(--muted);font-style:italic;}
+
+/* FOOTER STATS */
+.member-footer{padding:8px 16px 12px;display:flex;gap:12px;border-top:1px solid var(--border);}
+.mf-stat{font-size:.72rem;color:var(--muted);}
+.mf-stat span{color:var(--text);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:64px 24px;color:var(--muted);grid-column:1/-1;}
+.empty-icon{font-size:3rem;opacity:.3;margin-bottom:12px;}
+.empty-txt{font-size:.9rem;font-style:italic;}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 16px;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;}
+.btn-primary{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#06030f;font-weight:700;}
+.btn-primary:hover{background:linear-gradient(135deg,var(--gold),var(--gold-light));}
+.btn-danger {background:rgba(192,57,43,.2);border:1px solid rgba(192,57,43,.5);color:#e74c3c;}
+.btn-danger:hover{background:rgba(192,57,43,.35);}
+.btn-warning{background:rgba(243,156,18,.12);border:1px solid rgba(243,156,18,.4);color:#f39c12;}
+.btn-warning:hover{background:rgba(243,156,18,.25);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-success{background:rgba(39,174,96,.2);border:1px solid rgba(39,174,96,.5);color:#2ecc71;}
+.btn-sm{padding:5px 10px;font-size:.58rem;min-height:28px;}
+.btn-xs{padding:4px 8px;font-size:.56rem;min-height:24px;}
+.btn-full{width:100%;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:11px;}
+.form-label{display:block;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.form-input,.form-select-lg{width:100%;background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--text);padding:11px 13px;font-family:'Crimson Pro',serif;font-size:1rem;outline:none;transition:border-color .2s;-webkit-appearance:none;border-radius:0;}
+.form-input:focus,.form-select-lg:focus{border-color:var(--gold);}
+.form-select-lg{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a7a60'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;}
+.form-select-lg option{background:var(--bg2);}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:400px){.form-row-2{grid-template-columns:1fr;}}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border-s);padding:26px 22px;max-width:500px;width:100%;position:relative;max-height:92vh;overflow-y:auto;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.modal-title{font-family:'Cinzel',serif;font-size:.95rem;color:var(--gold);margin-bottom:16px;letter-spacing:.06em;}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;padding:4px;}
+.modal-close:hover{color:var(--gold);}
+.confirm-name{color:var(--gold);font-family:'Cinzel',serif;}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border-s),transparent);margin:14px 0;}
+
+/* ── IMPORT SECTION ── */
+.import-section{
+  background:linear-gradient(135deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border);
+  padding:20px;margin-bottom:24px;
+  position:relative;
+}
+.import-section::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(107,63,160,.8),transparent);}
+.import-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;cursor:pointer;}
+.import-title{font-family:'Cinzel',serif;font-size:.78rem;color:#9482C9;letter-spacing:.08em;text-transform:uppercase;}
+.import-badge{font-size:.56rem;padding:2px 8px;background:rgba(107,63,160,.2);border:1px solid rgba(107,63,160,.4);color:#9482C9;font-family:'Cinzel',serif;letter-spacing:.06em;}
+.import-body{display:none;margin-top:14px;}
+.import-body.open{display:block;}
+.import-desc{font-size:.82rem;color:var(--muted);line-height:1.55;margin-bottom:12px;}
+.import-format{background:rgba(0,0,0,.4);border:1px solid var(--border);padding:10px 13px;font-family:monospace;font-size:.78rem;color:#82e0aa;margin-bottom:12px;white-space:pre;overflow-x:auto;}
+.import-textarea{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--border);color:var(--text);padding:11px 13px;font-family:monospace;font-size:.82rem;outline:none;resize:vertical;min-height:100px;transition:border-color .2s;}
+.import-textarea:focus{border-color:#9482C9;}
+.import-preview{margin-top:10px;padding:10px 13px;background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.25);display:none;}
+.import-preview.show{display:block;}
+.import-preview-title{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#82e0aa;margin-bottom:7px;}
+
+/* ── LOADING ── */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.spin{font-size:2.8rem;animation:rot 2s linear infinite;}
+@keyframes rot{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.loading-txt{font-family:'Cinzel',serif;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-size:.78rem;}
+
+/* MOBILE */
+@media(max-width:700px){
+  .page-header{flex-direction:column;align-items:flex-start;}
+  .filter-bar{gap:7px;}
+  .filter-input{min-width:120px;}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay"><div class="spin">⚔</div><div class="loading-txt">Lade Mitglieder...</div></div>
+<div id="navbar-container"></div>
+
+<div class="page-wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">Gilde</div>
+      <h1 class="page-title">Mitglieder</h1>
+      <p class="page-subtitle" id="page-subtitle">Alle Gildenmitglieder auf einen Blick</p>
+    </div>
+    <div class="page-header-right">
+      <button class="btn btn-warning btn-sm" onclick="openResetAll()">↺ Alle EP/GP reset</button>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Mitglied hinzufügen</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card"><span class="stat-num" id="st-total">0</span><span class="stat-label">Mitglieder</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-tanks">0</span><span class="stat-label">Tanks</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-healers">0</span><span class="stat-label">Heiler</span></div>
+    <div class="stat-card"><span class="stat-num" id="st-dps">0</span><span class="stat-label">DPS</span></div>
+  </div>
+
+  <!-- IMPORT SECTION (WoW Addon vorbereitet) -->
+  <div class="import-section">
+    <div class="import-header" onclick="toggleImport()">
+      <span class="import-title">🔌 WoW Addon Import</span>
+      <span class="import-badge">In Vorbereitung</span>
+    </div>
+    <div class="import-body" id="import-body">
+      <p class="import-desc">
+        Sobald das WoW-Addon fertig ist, kannst du die Gildenmitglieder automatisch einlesen.
+        Kopiere die Addon-Ausgabe in das Feld unten — alle Mitglieder werden automatisch importiert.
+        Bereits vorhandene Mitglieder werden nicht überschrieben.
+      </p>
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Erwartetes Format (Addon-Ausgabe):</div>
+      <div class="import-format">NAME,KLASSE,ROLLE
+Arthax,warrior,tank
+Lunara,druid,healer
+Shivra,mage,dps</div>
+      <div class="form-group">
+        <label class="form-label">Addon-Daten einfügen</label>
+        <textarea class="import-textarea" id="import-textarea" placeholder="NAME,KLASSE,ROLLE&#10;Charaktername,warrior,tank&#10;..." oninput="previewImport()"></textarea>
+      </div>
+      <div class="import-preview" id="import-preview">
+        <div class="import-preview-title">Vorschau — erkannte Mitglieder:</div>
+        <div id="import-preview-list"></div>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-success" onclick="doImport()">⬇ Importieren</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearImport()">✕ Leeren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER & SORT -->
+  <div class="filter-bar">
+    <input class="filter-input" id="search-input" placeholder="🔍 Name suchen..." oninput="renderMembers()"/>
+    <select class="filter-select" id="filter-role" onchange="renderMembers()">
+      <option value="">Alle Rollen</option>
+      <option value="tank">Tank</option>
+      <option value="healer">Heiler</option>
+      <option value="dps">DPS</option>
+    </select>
+    <select class="filter-select" id="filter-class" onchange="renderMembers()">
+      <option value="">Alle Klassen</option>
+      <option value="warrior">Krieger</option>
+      <option value="paladin">Paladin</option>
+      <option value="hunter">Jäger</option>
+      <option value="rogue">Schurke</option>
+      <option value="priest">Priester</option>
+      <option value="shaman">Schamane</option>
+      <option value="mage">Magier</option>
+      <option value="warlock">Hexenmeister</option>
+      <option value="druid">Druide</option>
+    </select>
+    <div class="sort-pills">
+      <button class="sort-pill active" onclick="setSort('pr',this)">PR ↓</button>
+      <button class="sort-pill" onclick="setSort('name',this)">Name</button>
+      <button class="sort-pill" onclick="setSort('ep',this)">EP ↓</button>
+      <button class="sort-pill" onclick="setSort('class',this)">Klasse</button>
+    </div>
+  </div>
+
+  <!-- MEMBER GRID -->
+  <div class="member-grid" id="member-grid"></div>
+
+</div><!-- /page-wrap -->
+
+<!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- ADD MEMBER -->
+<div class="modal-overlay" id="m-add">
+  <div class="modal">
+    <button class="modal-close" onclick="closeM('m-add')">×</button>
+    <div class="modal-title">➕ Mitglied hinzufügen</div>
+    <div class="form-group">
+      <label class="form-label">Charaktername</label>
+      <input class="form-input" id="add-name" placeholder="Name..." onkeydown="if(event.key==='Enter')doAdd()"/>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Klasse</label>
+        <select class="form-select-lg" id="add-class">
+          <option value="warrior">Krieger</option><option value="paladin">Paladin</option>
+          <option value="hunter">Jäger</option><option value="rogue">Schurke</option>
+          <option value="priest">Priester</option><option value="shaman">Schamane</option>
+          <option value="mage">Magier</option><option value="warlock">Hexenmeister</option>
+          <option value="druid">Druide</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rolle</label>
+        <select class="form-select-lg" id="add-role">
+          <option value="tank">Tank</option>
+          <option value="healer">Heiler</option>
+          <option value="dps">DPS</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Start-EP (optional)</label>
+      <input class="form-input" type="number" id="add-ep" placeholder="0" min="0" inputmode="numeric"/>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" style="flex:1;" onclick="doAdd()">⚔ Hinzufügen</button>
+      <button class="btn btn-ghost" onclick="closeM('m-add')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT EP/GP -->
+<div class="modal-overlay" id="m-edit">
+  <div class="modal">
+    <button class="modal-close" onclick="closeM('m-edit')">×</button>
+    <div class="modal-title">✏ EP / GP bearbeiten</div>
+    <p style="font-size:.9rem;margin-bottom:14px;">Raider: <span class="confirm-name" id="edit-name"></span></p>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Effort Points (EP)</label>
+        <input class="form-input" type="number" id="edit-ep" min="0" inputmode="numeric"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gear Points (GP)</label>
+        <input class="form-input" type="number" id="edit-gp" min="1" inputmode="numeric"/>
+      </div>
+    </div>
+    <div style="background:rgba(200,168,75,.05);border:1px solid var(--border);padding:10px 13px;margin-bottom:14px;font-size:.8rem;color:var(--muted);">
+      <strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:.6rem;">PR = EP ÷ GP</strong><br>
+      Höhere PR = höhere Loot-Priorität. GP mind. 1.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" style="flex:1;" onclick="doEdit()">✅ Speichern</button>
+      <button class="btn btn-ghost" onclick="closeM('m-edit')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET SINGLE -->
+<div class="modal-overlay" id="m-reset">
+  <div class="modal">
+    <button class="modal-close" onclick="closeM('m-reset')">×</button>
+    <div class="modal-title">↺ Raider zurücksetzen</div>
+    <p style="font-size:.9rem;line-height:1.6;margin-bottom:16px;">
+      <span class="confirm-name" id="reset-name"></span> auf EP=0, GP=1 zurücksetzen?<br>
+      <span style="font-size:.82rem;color:var(--muted);">Die Loot-Historie bleibt erhalten.</span>
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-warning" style="flex:1;" onclick="doReset()">↺ Zurücksetzen</button>
+      <button class="btn btn-ghost" onclick="closeM('m-reset')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE -->
+<div class="modal-overlay" id="m-delete">
+  <div class="modal">
+    <button class="modal-close" onclick="closeM('m-delete')">×</button>
+    <div class="modal-title">🗑 Mitglied löschen</div>
+    <p style="font-size:.9rem;line-height:1.6;margin-bottom:16px;">
+      <span class="confirm-name" id="delete-name"></span> wirklich löschen?<br>
+      <span style="font-size:.82rem;color:#e74c3c;">⚠ Alle Daten dieses Mitglieds werden entfernt!</span>
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-danger" style="flex:1;" onclick="doDelete()">🗑 Löschen</button>
+      <button class="btn btn-ghost" onclick="closeM('m-delete')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET ALL -->
+<div class="modal-overlay" id="m-reset-all">
+  <div class="modal">
+    <button class="modal-close" onclick="closeM('m-reset-all')">×</button>
+    <div class="modal-title">↺ Alle EP/GP zurücksetzen</div>
+    <p style="font-size:.9rem;line-height:1.6;margin-bottom:16px;">
+      Alle Mitglieder auf EP=0, GP=1 setzen?<br>
+      <span style="font-size:.82rem;color:var(--muted);">Loot-Historie bleibt erhalten.</span>
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-warning" style="flex:1;" onclick="doResetAll()">↺ Alle zurücksetzen</button>
+      <button class="btn btn-ghost" onclick="closeM('m-reset-all')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+// ─── STATE ──────────────────────────────────────────────────────
+let G = null;
+let activeId = null;
+let sortMode = 'pr';
+let saveTimer = null;
+
+const CLASS_ICONS = {
+  warrior:'⚔', paladin:'🛡', hunter:'🏹', rogue:'🗡',
+  priest:'✨', shaman:'⚡', mage:'🔮', warlock:'💀', druid:'🌿'
+};
+const ROLE_ICONS = { tank:'🛡', healer:'💚', dps:'⚔' };
+
+// ─── INIT ────────────────────────────────────────────────────────
+(async () => {
+  G = await guildLoad();
+  document.getElementById('navbar-style').textContent = NAVBAR_CSS;
+  document.getElementById('navbar-container').innerHTML = buildNavbar('members', G.guildName);
+  document.getElementById('page-subtitle').textContent = `${G.guildName} · Alle Mitglieder auf einen Blick`;
+  renderStats();
+  renderMembers();
+  document.getElementById('loading-overlay').style.display = 'none';
+})();
+
+function qSave() {
+  setSaveIndicator('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    await guildSave(G);
+    setSaveIndicator('ok');
+  }, 500);
+}
+
+// ─── STATS ───────────────────────────────────────────────────────
+function renderStats() {
+  const m = G.members;
+  document.getElementById('st-total').textContent   = m.length;
+  document.getElementById('st-tanks').textContent   = m.filter(x=>x.role==='tank').length;
+  document.getElementById('st-healers').textContent = m.filter(x=>x.role==='healer').length;
+  document.getElementById('st-dps').textContent     = m.filter(x=>x.role==='dps').length;
+}
+
+// ─── SORT ────────────────────────────────────────────────────────
+function setSort(mode, btn) {
+  sortMode = mode;
+  document.querySelectorAll('.sort-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderMembers();
+}
+
+function sortedMembers(list) {
+  return [...list].sort((a, b) => {
+    if (sortMode === 'pr')   return PR(b.ep,b.gp) - PR(a.ep,a.gp);
+    if (sortMode === 'ep')   return b.ep - a.ep;
+    if (sortMode === 'name') return a.name.localeCompare(b.name);
+    if (sortMode === 'class') return (a.cls||'').localeCompare(b.cls||'');
+    return 0;
+  });
+}
+
+// ─── RENDER MEMBERS ──────────────────────────────────────────────
+function renderMembers() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const roleF  = document.getElementById('filter-role').value;
+  const classF = document.getElementById('filter-class').value;
+
+  let list = G.members.filter(m => {
+    if (search && !m.name.toLowerCase().includes(search)) return false;
+    if (roleF  && m.role !== roleF)  return false;
+    if (classF && m.cls  !== classF) return false;
+    return true;
+  });
+
+  list = sortedMembers(list);
+
+  // PR Ranking (alle Member, für Balkenbreite)
+  const allSorted = sortedMembers(G.members);
+  const maxPR = allSorted.length ? PR(allSorted[0].ep, allSorted[0].gp) : 1;
+
+  const grid = document.getElementById('member-grid');
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <div class="empty-txt">${G.members.length === 0
+        ? 'Noch keine Mitglieder hinzugefügt.<br>Klicke auf "+ Mitglied hinzufügen".'
+        : 'Keine Mitglieder für diese Filter-Kombination.'}</div>
+    </div>`;
+    renderStats();
+    return;
+  }
+
+  grid.innerHTML = list.map(m => memberCard(m, maxPR, allSorted)).join('');
+  renderStats();
+}
+
+function memberCard(m, maxPR, allSorted) {
+  const pr     = PR(m.ep, m.gp);
+  const barW   = maxPR > 0 ? Math.round((pr / maxPR) * 100) : 0;
+  const rank   = allSorted.findIndex(x => x.id === m.id) + 1;
+  const col    = classColor(m.cls);
+  const srs    = G.softReserves[m.id] || [];
+  const allLoot = [...(G.raidNights||[]), ...(G.dungeonRuns||[])].flatMap(r => r.loot||[]);
+  const won    = allLoot.filter(l => l.winnerId === m.id).length;
+  const att    = (G.raidNights||[]).filter(r => (r.attendees||[]).includes(m.id)).length;
+  const total  = (G.raidNights||[]).length;
+  const pct    = total > 0 ? Math.round((att/total)*100) : 0;
+
+  return `
+  <div class="member-card role-${m.role}">
+    <div class="member-card-stripe" style="background:${col};"></div>
+
+    <div class="member-card-top">
+      <div class="member-avatar">
+        <span>${CLASS_ICONS[m.cls]||'⚔'}</span>
+        <div class="member-avatar-role">${ROLE_ICONS[m.role]||''}</div>
+      </div>
+      <div class="member-info">
+        <div class="member-name" style="color:${col};">${m.name}</div>
+        <div class="member-class-role">
+          <span class="member-class" style="color:${col};opacity:.8;">${className(m.cls)}</span>
+          <span class="role-badge rb-${m.role}">${ROLE_LABELS[m.role]||m.role}</span>
+        </div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-ghost btn-xs" onclick="openEdit('${m.id}')" title="EP/GP bearbeiten">✏</button>
+        <button class="btn btn-warning btn-xs" onclick="openReset('${m.id}')" title="Zurücksetzen">↺</button>
+        <button class="btn btn-danger btn-xs" onclick="openDelete('${m.id}')" title="Löschen">🗑</button>
+      </div>
+    </div>
+
+    <div class="member-epgp">
+      <div class="epgp-stat">
+        <span class="epgp-val">${m.ep}</span>
+        <span class="epgp-lbl">EP</span>
+      </div>
+      <div class="epgp-stat">
+        <span class="epgp-val" style="color:var(--text);">${m.gp}</span>
+        <span class="epgp-lbl">GP</span>
+      </div>
+      <div class="epgp-stat epgp-pr">
+        <span class="epgp-val">${f2(pr)}</span>
+        <span class="epgp-lbl">PR</span>
+      </div>
+    </div>
+
+    <div class="member-pr-bar">
+      <div class="pr-bar-wrap">
+        <div class="pr-bar-fill" style="width:${barW}%"></div>
+      </div>
+      <div class="pr-bar-label">
+        <span class="pr-bar-rank">Rang #${rank} von ${G.members.length}</span>
+        <span class="pr-bar-rank">${barW}% max PR</span>
+      </div>
+    </div>
+
+    <div class="member-sr">
+      <div class="member-sr-title">🏆 Soft-Reserves</div>
+      <div class="sr-chips">
+        ${srs.length
+          ? srs.map(id => {
+              const it = ITEM_MAP[id];
+              return it
+                ? `<span class="sr-chip q-${it.q}" title="${it.bossName}">${it.name}</span>`
+                : `<span class="sr-chip">${id}</span>`;
+            }).join('')
+          : '<span class="sr-empty">Keine Reservierungen</span>'
+        }
+      </div>
+    </div>
+
+    <div class="member-footer">
+      <span class="mf-stat">Items: <span>${won}</span></span>
+      <span class="mf-stat">Raids: <span>${att}/${total}</span></span>
+      <span class="mf-stat" style="color:${pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--red)'};">
+        Anw.: <span>${pct}%</span>
+      </span>
+    </div>
+  </div>`;
+}
+
+// ─── MODAL HELPERS ───────────────────────────────────────────────
+const openM  = id => document.getElementById(id).classList.add('open');
+const closeM = id => document.getElementById(id).classList.remove('open');
+
+// ─── ADD ─────────────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-ep').value   = '';
+  openM('m-add');
+  setTimeout(() => document.getElementById('add-name').focus(), 100);
+}
+function doAdd() {
+  const name = document.getElementById('add-name').value.trim();
+  if (!name) { showToast('⚠ Bitte Namen eingeben!'); return; }
+  if (G.members.find(m => m.name.toLowerCase() === name.toLowerCase())) {
+    showToast('⚠ Dieser Name ist bereits vergeben!'); return;
+  }
+  G.members.push({
+    id:   uid(),
+    name,
+    cls:  document.getElementById('add-class').value,
+    role: document.getElementById('add-role').value,
+    ep:   parseInt(document.getElementById('add-ep').value) || 0,
+    gp:   1,
+  });
+  closeM('m-add');
+  showToast(`✅ ${name} hinzugefügt!`);
+  qSave(); renderMembers();
+}
+
+// ─── EDIT ────────────────────────────────────────────────────────
+function openEdit(id) {
+  activeId = id;
+  const m = G.members.find(x => x.id === id);
+  document.getElementById('edit-name').textContent = m.name;
+  document.getElementById('edit-ep').value = m.ep;
+  document.getElementById('edit-gp').value = m.gp;
+  openM('m-edit');
+}
+function doEdit() {
+  const m  = G.members.find(x => x.id === activeId);
+  const ep = parseInt(document.getElementById('edit-ep').value);
+  const gp = parseInt(document.getElementById('edit-gp').value);
+  if (!m || isNaN(ep) || isNaN(gp)) { showToast('⚠ Ungültige Werte!'); return; }
+  m.ep = Math.max(0, ep);
+  m.gp = Math.max(1, gp);
+  closeM('m-edit');
+  showToast(`✅ ${m.name} aktualisiert!`);
+  qSave(); renderMembers();
+}
+
+// ─── RESET SINGLE ────────────────────────────────────────────────
+function openReset(id) {
+  activeId = id;
+  const m = G.members.find(x => x.id === id);
+  document.getElementById('reset-name').textContent = m ? m.name : '?';
+  openM('m-reset');
+}
+function doReset() {
+  const m = G.members.find(x => x.id === activeId);
+  if (m) { m.ep = 0; m.gp = 1; showToast(`↺ ${m.name} zurückgesetzt!`); }
+  closeM('m-reset');
+  qSave(); renderMembers();
+}
+
+// ─── DELETE ──────────────────────────────────────────────────────
+function openDelete(id) {
+  activeId = id;
+  const m = G.members.find(x => x.id === id);
+  document.getElementById('delete-name').textContent = m ? m.name : '?';
+  openM('m-delete');
+}
+function doDelete() {
+  const m = G.members.find(x => x.id === activeId);
+  if (m) {
+    G.members = G.members.filter(x => x.id !== activeId);
+    delete G.softReserves[activeId];
+    showToast(`🗑 ${m.name} gelöscht!`);
+  }
+  closeM('m-delete');
+  qSave(); renderMembers();
+}
+
+// ─── RESET ALL ───────────────────────────────────────────────────
+function openResetAll() { openM('m-reset-all'); }
+function doResetAll() {
+  G.members.forEach(m => { m.ep = 0; m.gp = 1; });
+  closeM('m-reset-all');
+  showToast('↺ Alle EP/GP zurückgesetzt!');
+  qSave(); renderMembers();
+}
+
+// ─── IMPORT (WoW Addon vorbereitet) ─────────────────────────────
+function toggleImport() {
+  document.getElementById('import-body').classList.toggle('open');
+}
+
+function parseImportData(raw) {
+  const validClasses = Object.keys(CLASS_NAMES);
+  const validRoles   = ['tank','healer','dps'];
+  const lines = raw.trim().split('\n').map(l => l.trim()).filter(Boolean);
+  const results = [];
+  lines.forEach(line => {
+    if (line.toLowerCase().startsWith('name')) return; // Header überspringen
+    const parts = line.split(',').map(p => p.trim());
+    if (parts.length < 3) return;
+    const [name, cls, role] = parts;
+    if (!name || !validClasses.includes(cls.toLowerCase()) || !validRoles.includes(role.toLowerCase())) return;
+    results.push({ name, cls: cls.toLowerCase(), role: role.toLowerCase() });
+  });
+  return results;
+}
+
+function previewImport() {
+  const raw = document.getElementById('import-textarea').value;
+  const parsed = parseImportData(raw);
+  const preview = document.getElementById('import-preview');
+  const list    = document.getElementById('import-preview-list');
+  if (!parsed.length) { preview.classList.remove('show'); return; }
+  preview.classList.add('show');
+  list.innerHTML = parsed.map(p => {
+    const exists = G.members.find(m => m.name.toLowerCase() === p.name.toLowerCase());
+    return `<div style="font-size:.78rem;padding:2px 0;color:${exists?'var(--muted)':'var(--text)'};">
+      ${exists?'⏭':'✅'} <span style="color:${classColor(p.cls)};">${p.name}</span>
+      <span style="color:var(--muted);"> — ${className(p.cls)}, ${ROLE_LABELS[p.role]}</span>
+      ${exists?'<span style="color:var(--muted);font-size:.7rem;"> (bereits vorhanden)</span>':''}
+    </div>`;
+  }).join('');
+}
+
+function doImport() {
+  const raw = document.getElementById('import-textarea').value;
+  const parsed = parseImportData(raw);
+  if (!parsed.length) { showToast('⚠ Keine gültigen Daten gefunden!'); return; }
+  let added = 0;
+  parsed.forEach(p => {
+    if (!G.members.find(m => m.name.toLowerCase() === p.name.toLowerCase())) {
+      G.members.push({ id: uid(), name: p.name, cls: p.cls, role: p.role, ep: 0, gp: 1 });
+      added++;
+    }
+  });
+  clearImport();
+  showToast(`✅ ${added} Mitglied${added!==1?'er':''} importiert!`);
+  qSave(); renderMembers();
+}
+
+function clearImport() {
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-preview').classList.remove('show');
+  document.getElementById('import-preview-list').innerHTML = '';
+}
+</script>
+</body>
+</html>
