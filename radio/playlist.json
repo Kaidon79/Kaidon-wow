@@ -1,0 +1,29 @@
+{
+  "baseUrl": "https://raw.githubusercontent.com/kaidon79/Kaidon-wow/main/radio/",
+  "kategorien": {
+    "musik": {
+      "label": "🎵 Musik",
+      "ordner": "musik/",
+      "shuffle": true,
+      "tracks": [
+        {"titel": "Priester", "datei": "Priester.mp3", "dauer": "?"}
+      ]
+    },
+    "nachrichten": {
+      "label": "📰 Nachrichten",
+      "ordner": "nachrichten/",
+      "shuffle": false,
+      "tracks": [
+        {"titel": "Priester", "datei": "Priester.mp3", "dauer": "?"}
+      ]
+    },
+    "podcast": {
+      "label": "🎙 Podcast",
+      "ordner": "podcast/",
+      "shuffle": false,
+      "tracks": [
+        {"titel": "Priester", "datei": "Priester.mp3", "dauer": "?"}
+      ]
+    }
+  }
+}
